@@ -4,28 +4,43 @@
 <base target="_top">
 <meta charset="utf-8">
 <style>
+  /* ================================================================
+     PALETA — sale del logo del CIC 2.
+
+     Se aprobó en la muestra de diseño (codigo/muestra-diseno.html) antes de
+     tocar nada acá. Todo color del sistema sale de estas variables: si algún
+     estilo escribe un color a mano, es un error, porque no va a cambiar con
+     el tema y va a quedar ilegible en uno de los dos.
+     ================================================================ */
   :root{
-    --paper:#F6F7F4; --surface:#FFFFFF; --surface-2:#EFF2EE;
-    --ink:#191F1C; --muted:#5E6B64; --faint:#8A968F;
-    --rule:#DCE1DC; --rule-fuerte:#C3CBC5;
-    --acento:#1E5C48; --acento-ink:#164435; --acento-suave:#E3EDE7;
-    --alerta:#9A2B24; --alerta-suave:#F6E7E5;
-    --aviso:#7E5510; --aviso-suave:#F5EDDD;
-    --ok:#2E6B3E; --ok-suave:#E6F0E6;
-    --sans:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+    --acento:#15607F; --acento-ink:#0E4459; --acento-suave:#E1EDF3;
+    --cielo:#4FA8C9;
+    --paper:#F4F6F8; --surface:#FFFFFF; --surface-2:#EAEFF3;
+    --ink:#10222B; --muted:#55707E; --faint:#8AA0AB;
+    --rule:#DBE3E9; --rule-fuerte:#BECCD5;
+    --ok:#1F7A4D; --ok-suave:#E4F1EA;
+    --aviso:#9A6410; --aviso-suave:#F7EEDF;
+    --alerta:#A32721; --alerta-suave:#F8E7E5;
+    /* El texto que va ENCIMA del acento. En claro el acento es oscuro y pide
+       texto blanco; en oscuro es claro y pide texto oscuro. Un #fff fijo
+       desaparecía en modo oscuro. */
+    --sobre-acento:#FFFFFF;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",sans-serif;
     --mono:"Cascadia Mono","SF Mono",Consolas,"Liberation Mono",monospace;
-    --sombra:0 1px 2px rgba(25,31,28,.06), 0 12px 28px -20px rgba(25,31,28,.4);
+    --sombra:0 1px 2px rgba(16,34,43,.06), 0 14px 30px -22px rgba(16,34,43,.45);
   }
   @media (prefers-color-scheme:dark){
     :root{
-      --paper:#111512; --surface:#181E1B; --surface-2:#1F2723;
-      --ink:#E7EDE9; --muted:#98A49D; --faint:#77837C;
-      --rule:#293230; --rule-fuerte:#3A4642;
-      --acento:#6CC6A2; --acento-ink:#8FD8BA; --acento-suave:#1B302A;
-      --alerta:#E39089; --alerta-suave:#341E1C;
-      --aviso:#D6A85A; --aviso-suave:#302719;
-      --ok:#7FBF8C; --ok-suave:#1B2A1E;
-      --sombra:0 1px 2px rgba(0,0,0,.5), 0 12px 28px -20px rgba(0,0,0,.9);
+      --acento:#62BEDD; --acento-ink:#96D8EF; --acento-suave:#10333F;
+      --cielo:#7FCFE8;
+      --paper:#0C1418; --surface:#131E24; --surface-2:#1A272F;
+      --ink:#E4EDF1; --muted:#93A9B4; --faint:#6E8590;
+      --rule:#253339; --rule-fuerte:#35474F;
+      --ok:#63B981; --ok-suave:#152B20;
+      --aviso:#D5A052; --aviso-suave:#2C2415;
+      --alerta:#E8918A; --alerta-suave:#331B19;
+      --sobre-acento:#08161C;
+      --sombra:0 1px 2px rgba(0,0,0,.5), 0 14px 30px -22px rgba(0,0,0,.9);
     }
   }
   *{box-sizing:border-box;}
@@ -41,15 +56,15 @@
     padding:9px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;
     position:sticky;top:0;z-index:30;
   }
-  .marca{font-weight:700;letter-spacing:-.01em;line-height:1.15;
-         display:flex;align-items:center;gap:10px;}
-  .marca small{display:block;font-weight:400;font-size:10.5px;color:var(--muted);
-               letter-spacing:.08em;text-transform:uppercase;}
+  .marca{font-weight:700;letter-spacing:-.015em;line-height:1.25;font-size:19px;
+         display:flex;align-items:center;gap:12px;}
+  .marca small{display:block;font-weight:500;font-size:11px;color:var(--muted);
+               letter-spacing:.11em;text-transform:uppercase;
+               margin-top:5px;line-height:1.2;}
   /* El logo es redondo y sobre fondo blanco. En modo oscuro se le deja un
      anillo claro para que no quede recortado contra la barra. */
-  .marca .logo{width:44px;height:44px;border-radius:50%;display:block;flex:none;
+  .marca .logo{width:46px;height:46px;border-radius:50%;display:block;flex:none;
                background:#fff;box-shadow:0 0 0 1px var(--rule);}
-  @media (max-width:520px){ .marca .logo{width:34px;height:34px;} }
   nav.menu{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap;}
   nav.menu button{
     background:transparent;border:1px solid transparent;border-radius:4px;
@@ -59,8 +74,21 @@
   nav.menu button[aria-current="page"]{
     background:var(--acento-suave);color:var(--acento-ink);border-color:var(--acento);font-weight:600;
   }
-  .yo{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);white-space:nowrap;}
+  .yo{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);
+      white-space:nowrap;margin-left:auto;}
   .build{font-family:var(--mono);font-size:10.5px;color:var(--faint);}
+
+  /* Quién está conectado no es un detalle en una computadora compartida: es la
+     respuesta a "¿estoy cargando esto con MI usuario?". Por eso destaca. */
+  .quien-soy{display:inline-flex;align-items:center;gap:7px;
+             background:var(--acento-suave);color:var(--acento-ink);
+             border:1px solid var(--acento);border-radius:999px;
+             padding:5px 12px 5px 6px;font-weight:640;font-size:13.5px;
+             max-width:230px;min-width:0;}
+  .quien-soy .inicial{width:24px;height:24px;border-radius:50%;flex:none;
+                      background:var(--acento);color:var(--sobre-acento);
+                      display:grid;place-items:center;font-size:12px;font-weight:700;}
+  .quien-soy .nom{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
   /* ---------------- controles ---------------- */
   /* ================================================================
@@ -99,8 +127,9 @@
     padding:8px 14px;min-height:38px;font-weight:500;
   }
   .btn:hover{background:var(--surface-2);}
-  .btn.principal{background:var(--acento);border-color:var(--acento);color:#fff;}
-  .btn.principal:hover{filter:brightness(1.08);}
+  .btn.principal{background:var(--acento);border-color:var(--acento);
+                 color:var(--sobre-acento);}
+  .btn.principal:hover{background:var(--acento-ink);border-color:var(--acento-ink);}
   .btn.peligro{color:var(--alerta);border-color:var(--alerta);}
   .btn.chico{padding:4px 9px;min-height:30px;font-size:13px;}
   .btn[disabled]{opacity:.45;cursor:not-allowed;}
@@ -119,6 +148,15 @@
   .subtitulo{font-size:13px;color:var(--muted);}
   .encabezado{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;
               margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--rule);}
+  /* La cabecera de la vista de día: la FECHA es el dato principal. */
+  .encabezado.dia{align-items:flex-start;}
+  .encabezado .ubica{min-width:0;}
+  .fecha-grande{margin:0;font-size:22px;line-height:1.15;font-weight:720;
+                color:var(--acento);letter-spacing:-.015em;
+                font-variant-numeric:tabular-nums;}
+  .encabezado.dia h1{margin:3px 0 0;font-size:18px;}
+  .encabezado.dia .subtitulo{margin-top:1px;}
+  @media (max-width:560px){ .fecha-grande{font-size:19px;} }
   .encabezado .der{margin-left:auto;}
   section.bloque{background:var(--surface);border:1px solid var(--rule);border-radius:6px;
                  padding:16px;margin-bottom:16px;}
@@ -128,21 +166,64 @@
   /* ---------------- grilla de agenda ---------------- */
   .grilla{display:flex;flex-direction:column;border:1px solid var(--rule);
           background:var(--surface);border-radius:6px;overflow:hidden;}
-  .franja{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;
-          padding:9px 12px;border-bottom:1px solid var(--rule);}
+  /* ================================================================
+     LA FRANJA — la fila que más se mira de todo el sistema.
+
+     Dos decisiones que se aprobaron en la muestra:
+
+     · La HORA en 22 px, monoespaciada y con cifras de ancho fijo. El día se
+       recorre de un vistazo en vez de leerlo renglón por renglón. Cuesta
+       unos dos turnos menos por pantalla, y vale la pena.
+     · Una CINTA de color a la izquierda por estado. Así el estado se ve
+       antes de leerse: mirando la columna se sabe cómo viene el día sin
+       leer una sola palabra. La etiqueta de texto se queda igual — el color
+       solo nunca alcanza, ni con sol en la pantalla ni para quien no
+       distingue bien los tonos.
+     ================================================================ */
+  .franja{display:grid;grid-template-columns:6px 74px 1fr auto;gap:0 14px;
+          grid-template-areas:"c h q e";align-items:center;
+          min-height:56px;padding:8px 12px 8px 0;
+          border-bottom:1px solid var(--rule);}
   .franja:last-child{border-bottom:0;}
-  .franja .h{font-family:var(--mono);font-size:13px;color:var(--muted);
-             font-variant-numeric:tabular-nums;}
-  .franja .quien b{font-weight:600;}
-  .franja .quien span{display:block;font-size:12.5px;color:var(--muted);}
+  .franja .cinta{grid-area:c;align-self:stretch;background:transparent;
+                 border-radius:0 3px 3px 0;}
+  .franja .h{grid-area:h;font-family:var(--mono);font-size:22px;font-weight:600;
+             color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
+  .franja .quien{grid-area:q;min-width:0;overflow-wrap:anywhere;}
+  .franja .estado{grid-area:e;}
+  .franja .quien b{font-weight:600;font-size:15px;display:block;}
+  .franja .quien span{display:block;font-size:13px;color:var(--muted);margin-top:1px;}
   .franja .vacio{color:var(--faint);font-style:italic;}
-  .franja.sobre{background:var(--aviso-suave);border-left:3px solid var(--aviso);}
-  .franja.sobre .h::before{content:"+ ";color:var(--aviso);font-weight:700;}
+
+  /* El estado, en color. Reservado azul, atendido verde, ausente ámbar,
+     cancelado gris: los mismos colores que las etiquetas. */
+  .franja.est-RESERVADO .cinta{background:var(--acento);}
+  .franja.est-ATENDIDO  .cinta{background:var(--ok);}
+  .franja.est-AUSENTE   .cinta{background:var(--aviso);}
+  .franja.est-CANCELADO .cinta{background:var(--rule-fuerte);}
+  .franja.est-REPROGRAMADO .cinta{background:var(--rule-fuerte);}
+  /* Lo que ya pasó se apaga: hace resaltar lo que queda por atender. */
+  .franja.est-ATENDIDO .quien b{color:var(--muted);font-weight:520;}
+  .franja.est-ATENDIDO .h{color:var(--faint);font-weight:500;}
+  .franja.est-CANCELADO .quien b,
+  .franja.est-REPROGRAMADO .quien b{text-decoration:line-through;color:var(--faint);}
+  .franja.est-CANCELADO .h,
+  .franja.est-REPROGRAMADO .h{color:var(--faint);}
+
+  .franja.libre{min-height:46px;}
+  .franja.libre .h{color:var(--faint);font-weight:500;}
+  .franja.libre .cinta{background:transparent;}
+  .franja.libre.clicable:hover .cinta{background:var(--cielo);}
+
+  .franja.sobre{background:var(--aviso-suave);}
+  .franja.sobre .cinta{background:var(--aviso);}
+  .franja.sobre .h::before{content:"+";color:var(--aviso);font-weight:700;margin-right:2px;}
   /* Una fila en la que se puede hacer algo tiene que parecerlo, y tiene que
      poder usarse con el teclado: en un mostrador se trabaja más rápido con
      tabulador y Enter que buscando el mouse. */
   .franja.clicable{cursor:pointer;}
   .franja.clicable:hover{background:var(--acento-suave);}
+  .franja.libre.clicable:hover .quien{color:var(--acento-ink);font-weight:560;}
   .franja.clicable:focus-visible{outline:2px solid var(--acento);outline-offset:-2px;}
   .franja.recien{animation:destello 1.6s ease-out;}
   @keyframes destello{from{background:var(--acento-suave);} to{background:transparent;}}
@@ -176,7 +257,29 @@
   .lista-cuentas li{display:flex;align-items:center;gap:10px;padding:4px 0;}
   .lista-cuentas .ayuda{margin:0;}
   .dia-semana .cuenta,.col-medico .cuenta{font-family:var(--mono);font-size:11.5px;
-                                          color:var(--muted);margin-bottom:6px;}
+                                          color:var(--muted);margin-bottom:6px;
+                                          font-variant-numeric:tabular-nums;
+                                          display:flex;align-items:center;gap:8px;}
+  /* ================================================================
+     LA BARRA DE OCUPACIÓN
+
+     Cambia de color a medida que se llena. Una agenda llena NO es un
+     problema —es lo deseable—, pero en el mostrador significa una parada en
+     seco: hay que ofrecer otro día u otro profesional. Por eso el 100 % va
+     en rojo y además dice COMPLETO: un rojo y un ámbar en una barra de seis
+     píxeles se parecen demasiado para confiarle algo así solo al color.
+     ================================================================ */
+  .medidor{flex:1;height:6px;border-radius:3px;background:var(--surface-2);
+           overflow:hidden;min-width:38px;}
+  .medidor i{display:block;height:100%;background:var(--acento);
+             transition:width .25s ease, background-color .25s ease;}
+  .medidor.q1 i{background:var(--cielo);}     /* hasta 40 % */
+  .medidor.q2 i{background:var(--acento);}    /* 40-69 % */
+  .medidor.q3 i{background:#C08A2E;}          /* 70-89 % */
+  .medidor.q4 i{background:var(--aviso);}     /* 90-99 % */
+  .medidor.q5 i{background:var(--alerta);}    /* 100 % */
+  @media (prefers-color-scheme:dark){ .medidor.q3 i{background:#C9973F;} }
+  .completo{color:var(--alerta);font-weight:700;letter-spacing:.03em;}
   .dia-semana ul,.col-medico ul{list-style:none;margin:0;padding:0;}
   .dia-semana li,.col-medico li{font-size:12.5px;padding:3px 0;
                                 border-bottom:1px solid var(--rule);
@@ -318,6 +421,28 @@
   .pill.si{color:var(--ok);} .pill.no{color:var(--faint);}
   .pill.prop{color:var(--aviso);}
 
+  /* ================================================================
+     TAMAÑOS DE PANTALLA
+
+     Tres lugares muy distintos: la PC del mostrador, una tablet en la mano
+     de enfermería, y el teléfono de alguien que mira la agenda desde su
+     casa. No hay una "versión móvil": hay una sola que se acomoda.
+
+     Los cortes NO están en los anchos de moda de tal teléfono, sino donde
+     ESTE contenido se rompe:
+       700 px  la etiqueta de estado ya no entra al lado del nombre
+       560 px  el logo y la marca compiten con el menú
+     ================================================================ */
+  @media (max-width:700px){
+    /* La etiqueta de estado baja debajo del nombre en vez de apretarlo.
+       Antes, "Consulta por patología · 2266 41-7730" se partía en cuatro
+       renglones para dejarle lugar a la palabra RESERVADO. */
+    .franja{grid-template-columns:6px 66px 1fr;
+            grid-template-areas:"c h q" "c . e";row-gap:5px;}
+    .franja.libre{grid-template-areas:"c h q";}
+    .franja .estado{justify-self:start;}
+    .franja .h{font-size:21px;}
+  }
   @media (max-width:620px){
     /* En el teléfono la barra se apila: cada control ocupa el ancho completo
        en lugar de quedar apretado contra los otros. */
@@ -327,12 +452,40 @@
     .barra .nav-fechas .btn{flex:1;}
     .sello{margin-left:0;flex:1 1 100%;}
     .semana,.tablero{grid-template-columns:1fr;}
-    .franja{grid-template-columns:54px 1fr;grid-template-areas:"h quien" ". est";row-gap:4px;}
-    .franja .h{grid-area:h;} .franja .quien{grid-area:quien;}
-    .franja .estado{grid-area:est;justify-self:start;}
     main{padding:12px;}
-    nav.menu{order:3;width:100%;margin-left:0;}
-    .yo{order:2;margin-left:auto;}
+  }
+  @media (max-width:560px){
+    /* -----------------------------------------------------------------
+       La cabecera en un teléfono: tres renglones, y en ESTE orden.
+
+         1. qué es esto  (logo y marca)
+         2. a dónde voy  (el menú, que es lo que más se toca)
+         3. quién soy    (usuario, versión y sesión, al final)
+
+       Antes quedaba la navegación abajo de los botones de sesión, que se
+       usan una vez por día.
+       ----------------------------------------------------------------- */
+    header{padding:9px 10px;gap:9px 10px;}
+    .marca{font-size:16.5px;gap:10px;order:1;width:100%;}
+    .marca .logo{width:38px;height:38px;}
+    .marca small{font-size:10px;margin-top:3px;}
+    nav.menu{order:2;width:100%;margin-left:0;gap:4px;
+             overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px;
+             /* La sombrita del borde avisa que hay más para deslizar: sin
+                eso, "Configuración" cortada parece un error de dibujo. */
+             -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent);
+             mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent);}
+    nav.menu button{white-space:nowrap;padding:7px 11px;}
+    .yo{order:3;width:100%;margin-left:0;gap:8px;flex-wrap:wrap;
+        padding-top:8px;border-top:1px solid var(--rule);}
+    .quien-soy{margin-right:auto;font-size:12.5px;padding:4px 10px 4px 5px;}
+    .franja{grid-template-columns:5px 58px 1fr;}
+    .franja .h{font-size:19px;}
+  }
+  @media (max-width:380px){
+    .franja{grid-template-columns:5px 52px 1fr;gap:0 9px;}
+    .franja .h{font-size:18px;}
+    .franja .quien b{font-size:14px;}
   }
   @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important;}}
 </style>
@@ -369,7 +522,7 @@
   <nav class="menu oculto" id="menu" aria-label="Secciones"></nav>
 
   <div class="yo oculto" id="yo">
-    <span id="yo-nombre"></span>
+    <span class="quien-soy" id="yo-nombre"></span>
     <select id="ver-como" class="oculto" aria-label="Ver como"></select>
     <span class="build" id="pendientes" title="Operaciones en camino al servidor"></span>
     <span class="build" id="tiempos" title="Cuánto tardó el último pedido"></span>
@@ -386,7 +539,7 @@
 // transporte_web.html.
 var CLIENT_ID    = "873472275504-qia4rjcejadpagkgam7urn0bahq0n7ur.apps.googleusercontent.com";
 var URL_NUCLEO   = "https://script.google.com/macros/s/AKfycby-OWNY3iXvC4ssuWxHb_jogLtNbUtNlPX8bGY3IMu571aKJPFxKWoHUpE-0x4xy_kb/exec";
-var BUILD_PORTAL = "2026-09-05 19:41";
+var BUILD_PORTAL = "2026-09-05 20:43";
 var URL_PORTAL   = "";   // no aplica: esta pantalla no vive en Apps Script
 </script>
 
@@ -1536,9 +1689,20 @@ function pintarAgenda(g, silencioso) {
   var cambio = (A.huella !== null && A.huella !== huella);
   A.huella = huella;
 
-  var html = '<div class="encabezado">' +
-    '<h1>' + txt(medico.apellido ? (medico.apellido + ', ' + medico.nombre) : 'Agenda') + '</h1>' +
-    '<div class="subtitulo">' + txt(fechaLarga(g.fecha)) + (esp ? ' · ' + txt(esp) : '') + '</div>' +
+  // ================================================================
+  //  El orden: QUÉ DÍA, de quién, dónde.
+  //
+  //  En la vista de día el dato que ubica todo lo demás es la fecha: es lo
+  //  que hay que verificar antes de dar un turno, y equivocarse de día es
+  //  el error caro. Va grande y en el color del acento; el profesional
+  //  abajo, y la especialidad en gris.
+  // ================================================================
+  var html = '<div class="encabezado dia">' +
+    '<div class="ubica">' +
+      '<p class="fecha-grande">' + txt(fechaLarga(g.fecha)) + '</p>' +
+      '<h1>' + txt(medico.apellido ? (medico.apellido + ', ' + medico.nombre) : 'Agenda') + '</h1>' +
+      (esp ? '<div class="subtitulo">' + txt(esp) + '</div>' : '') +
+    '</div>' +
     '</div>';
 
   if (g.cerrado) {
@@ -1557,7 +1721,9 @@ function pintarAgenda(g, silencioso) {
             '</div>';
     if (g.fuera_de_plantilla) {
       g.fuera_de_plantilla.forEach(function (t) {
-        html += '<div class="franja clicable" data-turno="' + txt(t.id) + '">' +
+        html += '<div class="franja clicable' + claseEstado(t.estado) + '"' +
+                ' data-turno="' + txt(t.id) + '">' +
+                cintaEstado(t.estado) +
                 '<div class="h">' + txt(t.hora) + '</div>' +
                 '<div class="quien">' + datosPaciente(t) + '</div>' +
                 insignia(t.estado) + '</div>';
@@ -1620,29 +1786,51 @@ function pintarAgenda(g, silencioso) {
   conectarGrilla(g, g.medico_id, g.fecha);
 }
 
+/**
+ * La cinta de color del costado.
+ *
+ * Va SIEMPRE, aunque esté transparente: si se dibujara solo cuando hay
+ * estado, las franjas libres tendrían una columna menos y las horas no
+ * quedarían alineadas con las de arriba y abajo. Una columna de horas que
+ * baila es peor que un poco de HTML de más.
+ */
+function cintaEstado(estado) {
+  return '<span class="cinta"></span>';
+}
+
+/** La clase que le pone color a esa cinta y apaga lo que ya pasó. */
+function claseEstado(estado) {
+  return estado ? ' est-' + String(estado).toUpperCase() : '';
+}
+
 function filaFranja(f, destello) {
   if (f.libre) {
     // Una franja libre es clicable solo si la persona puede dar turnos: si no,
     // hacer clic y que no pase nada es peor que no invitar al clic.
     var sePuede = puede('turno.crear');
-    return '<div class="franja' + (sePuede ? ' clicable' : '') + '"' +
+    return '<div class="franja libre' + (sePuede ? ' clicable' : '') + '"' +
            (sePuede ? ' data-libre="' + txt(f.inicio) + '" tabindex="0" role="button"' +
                       ' title="Dar turno a las ' + txt(f.hora) + '"' : '') + '>' +
+           cintaEstado(null) +
            '<div class="h">' + txt(f.hora) + '</div>' +
            '<div class="quien vacio">' + (sePuede ? 'libre · dar turno' : 'libre') + '</div>' +
            '<div></div></div>';
   }
   var t = f.turno;
-  return '<div class="franja clicable' + (destello ? ' recien' : '') + '"' +
+  return '<div class="franja clicable' + claseEstado(t.estado) +
+         (destello ? ' recien' : '') + '"' +
          ' data-turno="' + txt(t.id) + '" tabindex="0" role="button">' +
+         cintaEstado(t.estado) +
          '<div class="h">' + txt(f.hora) + '</div>' +
          '<div class="quien">' + datosPaciente(t) + '</div>' +
          insignia(t.estado) + '</div>';
 }
 
 function filaSobreturno(s, destello) {
-  return '<div class="franja sobre clicable' + (destello ? ' recien' : '') + '"' +
+  return '<div class="franja sobre clicable' + claseEstado(s.estado) +
+         (destello ? ' recien' : '') + '"' +
          ' data-turno="' + txt(s.id) + '" tabindex="0" role="button">' +
+         cintaEstado(s.estado) +
          '<div class="h">' + txt(s.hora) + '</div>' +
          '<div class="quien">' + datosPaciente(s) +
          '<span>Sobreturno · ' + txt(s.motivo_sobreturno || 'sin motivo') + '</span></div>' +
@@ -1796,6 +1984,32 @@ function exportarTablero() {
     titulo: tituloAgenda(), subtitulo: fechaLarga(A.fecha),
     columnas: COLUMNAS_TURNO, filas: filas
   });
+}
+
+/**
+ * La barra de ocupación de una columna del tablero.
+ *
+ * ================================================================
+ *  QUÉ SIGNIFICA EL COLOR, QUE NO ES OBVIO
+ *
+ *  Una agenda llena NO es un problema: es lo deseable. Pero en el mostrador
+ *  significa una parada en seco —hay que ofrecer otro día u otro
+ *  profesional— y eso tiene que saltar a la vista. Por eso la escala va del
+ *  celeste al ámbar y el 100 % en rojo.
+ *
+ *  Y por eso el 100 % dice además COMPLETO: un rojo y un ámbar en una barra
+ *  de seis píxeles se parecen demasiado con sol en la pantalla, o para
+ *  quien no distingue bien esos tonos. El color acompaña, no informa solo.
+ * ================================================================
+ */
+function barraOcupacion(ocupadas, total, pct) {
+  pct = Number(pct) || 0;
+  var q = pct >= 100 ? 'q5' : pct >= 90 ? 'q4' : pct >= 70 ? 'q3' : pct >= 40 ? 'q2' : 'q1';
+  var lleno = Math.max(0, Math.min(100, pct));
+  return '<div class="cuenta">' + ocupadas + '/' + total +
+         '<span class="medidor ' + q + '"><i style="width:' + lleno + '%"></i></span>' +
+         (pct >= 100 ? '<span class="completo">COMPLETO</span>' : pct + ' %') +
+         '</div>';
 }
 
 /** El estado se codifica en texto ademas de color: distinguirlo solo por
@@ -2042,8 +2256,7 @@ function pintarTablero(fecha, totales) {
         'tabindex="0" role="button" title="Ver la agenda de este profesional">' +
         txt(c.medico.apellido + ', ' + c.medico.nombre) +
         (esp ? '<small>' + txt(esp) + '</small>' : '') + '</h4>' +
-      '<div class="cuenta">' + g.resumen.ocupadas + ' de ' + g.resumen.total + ' · ' +
-        g.resumen.ocupacion + ' %</div>' +
+      barraOcupacion(g.resumen.ocupadas, g.resumen.total, g.resumen.ocupacion) +
       '<ul>' + filas + '</ul></div>';
   }).join('') + '</div>';
 
@@ -4959,8 +5172,15 @@ function aplicarSesion(s, provisoria) {
   $('arranque').classList.add('oculto');
 
   $('yo').classList.remove('oculto');
-  $('yo-nombre').textContent = ((s.usuario.nombre || '') + ' ' + (s.usuario.apellido || '')).trim()
-                               || s.usuario.email;
+  // Quién está conectado, con iniciales. En una computadora de mostrador
+  // compartida es la respuesta a "¿estoy cargando esto con MI usuario?", así
+  // que se ve de lejos en vez de ser un texto gris más.
+  var nom = ((s.usuario.nombre || '') + ' ' + (s.usuario.apellido || '')).trim()
+            || s.usuario.email;
+  $('yo-nombre').innerHTML =
+    '<span class="inicial">' + txt(iniciales(s.usuario)) + '</span>' +
+    '<span class="nom">' + txt(nom) + '</span>';
+  $('yo-nombre').title = s.usuario.email;
 
   // El selector "Ver como" solo aparece con mas de un rol. Es comodidad
   // de interfaz: el servidor evalua siempre la union completa de roles y
@@ -4985,6 +5205,15 @@ function aplicarSesion(s, provisoria) {
 
   dibujarMenu();
   irA(S.vista || 'agenda', true);
+}
+
+/** Las iniciales que van en el círculo. Del nombre y apellido si están; si
+ *  no, las dos primeras letras del correo, que siempre hay. */
+function iniciales(u) {
+  var a = String(u.nombre || '').trim().charAt(0);
+  var b = String(u.apellido || '').trim().charAt(0);
+  var s = (a + b).toUpperCase();
+  return s || String(u.email || '?').substring(0, 2).toUpperCase();
 }
 
 /** Deja a la vista que lo dibujado todavia es la foto guardada. */
