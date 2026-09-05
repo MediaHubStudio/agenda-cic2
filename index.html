@@ -141,6 +141,11 @@
   h4.rotulo.clicable:focus-visible{outline:2px solid var(--acento);outline-offset:2px;}
   .cuenta.alerta{color:var(--alerta) !important;font-weight:600;}
   .pie-semana{margin-top:10px;font-size:12px;color:var(--muted);}
+  /* Ficha del paciente: rotulo a la izquierda, dato a la derecha. */
+  td.rotulo-dato{color:var(--muted);font-size:13px;width:34%;white-space:nowrap;}
+  td.dato .ayuda{display:block;font-size:11.5px;color:var(--faint);}
+  label.en-linea{display:inline-flex;align-items:center;gap:6px;margin:0;
+                 font-size:13px;white-space:nowrap;}
   .lista-cuentas{list-style:none;margin:10px 0;padding:0;}
   .lista-cuentas li{display:flex;align-items:center;gap:10px;padding:4px 0;}
   .lista-cuentas .ayuda{margin:0;}
@@ -154,12 +159,31 @@
   .col-medico li[data-turno]{cursor:pointer;}
   .col-medico li[data-turno]:hover{background:var(--acento-suave);}
   .col-medico li.libre{color:var(--faint);font-style:italic;}
+  .col-medico li.libre.clicable{cursor:pointer;}
+  .col-medico li.libre.clicable:hover{background:var(--acento-suave);color:var(--acento-ink);
+                                      font-style:normal;}
+  .col-medico li.libre.clicable:focus-visible{outline:2px solid var(--acento);outline-offset:-2px;}
   .col-medico li.sobre{background:var(--aviso-suave);}
   .dia-semana li .h,.col-medico li .h{font-family:var(--mono);color:var(--muted);}
-  /* El tablero necesita más ancho que una agenda de un solo médico. Si el
+  /* El tablero necesita más ancho que una agenda de un solo profesional. Si el
      navegador no entiende :has(), queda en el ancho normal y se sigue viendo
      bien: es más angosto, no roto. */
-  main:has(.tablero),main:has(.semana){max-width:1400px;}
+  main:has(.tablero),main:has(.semana),main:has(.ancha){max-width:1400px;}
+
+  /* Usuarios y roles: entraba solo con scroll horizontal, y una tabla de
+     permisos que hay que arrastrar para leer es una tabla que nadie revisa.
+     Las columnas de rol se aprietan al ancho del titulo, el correo puede
+     partirse, y lo que sobra se lo lleva el nombre. */
+  table.usuarios{table-layout:auto;}
+  table.usuarios th.rol-col,table.usuarios td.rol-col{
+    text-align:center;width:1%;white-space:nowrap;padding-left:6px;padding-right:6px;
+    font-size:12px;
+  }
+  table.usuarios td:first-child{overflow-wrap:anywhere;font-size:12.5px;}
+  @media (max-width:900px){
+    table.usuarios th.rol-col{writing-mode:vertical-rl;transform:rotate(180deg);
+                              white-space:nowrap;padding:6px 2px;}
+  }
 
   .estado{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;
           padding:2px 7px;border:1px solid currentColor;border-radius:3px;white-space:nowrap;}
@@ -315,7 +339,7 @@
 // transporte_web.html.
 var CLIENT_ID    = "873472275504-qia4rjcejadpagkgam7urn0bahq0n7ur.apps.googleusercontent.com";
 var URL_NUCLEO   = "https://script.google.com/macros/s/AKfycby-OWNY3iXvC4ssuWxHb_jogLtNbUtNlPX8bGY3IMu571aKJPFxKWoHUpE-0x4xy_kb/exec";
-var BUILD_PORTAL = "2026-09-05 18:08";
+var BUILD_PORTAL = "2026-09-05 18:50";
 var URL_PORTAL   = "";   // no aplica: esta pantalla no vive en Apps Script
 </script>
 
@@ -825,7 +849,7 @@ function conReintentos(accion, datos, intento, esperaCola) {
 // una pantalla vacía cada vez que entraba.
 //
 // Se guarda en el navegador lo que NO cambia de un día para el otro —quién
-// sos, qué podés hacer, los médicos y consultorios— y con eso la pantalla se
+// sos, qué podés hacer, los profesionales y consultorios— y con eso la pantalla se
 // dibuja entera de entrada. Los datos reales llegan detrás y la reemplazan.
 //
 // LO QUE NO SE GUARDA, a propósito: la agenda. Ahí van nombres y teléfonos
@@ -1153,7 +1177,7 @@ function refrescarCatalogos() {
 // una. Moverse de dia no vuelve a preguntar: la respuesta ya esta aca.
 var A = { medicoId: null, fecha: null, huella: null, grillas: {}, sellos: {},
           // 'dia' | 'semana' | 'tablero'. Recepción arranca en tablero: lo que
-          // mira al llegar es el día entero del centro, no un médico.
+          // mira al llegar es el día entero del centro, no un profesional.
           modo: null,
           // Mientras la pantalla se dibujó de memoria, la agenda todavía no
           // llegó: la trae sesion.iniciar y no hay que pedirla aparte.
@@ -1163,7 +1187,7 @@ var A = { medicoId: null, fecha: null, huella: null, grillas: {}, sellos: {},
  *  puede cambiar de modo con los botones. */
 function modoInicial() {
   if (A.modo) return A.modo;
-  if (alcance('agenda.ver').indexOf('TODOS') < 0) return 'dia';   // el médico, su día
+  if (alcance('agenda.ver').indexOf('TODOS') < 0) return 'dia';   // el profesional, su día
   return (S.verComo === 'RECEPCION') ? 'tablero' : 'dia';
 }
 
@@ -1236,9 +1260,9 @@ function montarAgenda(cont) {
 
   if (!medicos.length) {
     cont.innerHTML =
-      '<main><div class="caja aviso"><h3>Todavía no hay médicos cargados</h3>' +
+      '<main><div class="caja aviso"><h3>Todavía no hay profesionales cargados</h3>' +
       '<p>La agenda no puede mostrar nada hasta que se den de alta las especialidades, ' +
-      'los consultorios, los médicos y sus horarios de atención.</p>' +
+      'los consultorios, los profesionales y sus horarios de atención.</p>' +
       (puede('config.catalogos')
         ? '<p><button class="btn principal" onclick="irA(\'config\')">Ir a Configuración</button></p>'
         : '<p>Pedile a un administrador que los cargue.</p>') +
@@ -1276,7 +1300,7 @@ function montarAgenda(cont) {
             }).join('') +
           '</div>'
         : '') +
-      '<select id="ag-medico" aria-label="Médico"' +
+      '<select id="ag-medico" aria-label="Profesional"' +
         ((puedeVerTodos && !esTablero) ? '' : ' disabled') + '>' +
         opciones(medicos, A.medicoId, function (m) { return m.apellido + ', ' + m.nombre; }) +
       '</select>' +
@@ -1423,7 +1447,7 @@ function cargarDia(silencioso) {
       sellarAgenda();
     })
     .catch(function (err) {
-      // Si mientras tanto se cambió de médico, de fecha o de pantalla, este
+      // Si mientras tanto se cambió de profesional, de fecha o de pantalla, este
       // error ya no es de nada que se esté mirando.
       if (S.vista !== 'agenda' || A.medicoId !== medicoPedido || A.fecha !== fechaPedida) return;
       if ($('ag-cuerpo')) $('ag-cuerpo').innerHTML = '';
@@ -1471,7 +1495,7 @@ function pintarAgenda(g, silencioso) {
     '</div>';
 
   if (g.cerrado) {
-    // El centro no abre. Es distinto de "este médico no atiende hoy", y la
+    // El centro no abre. Es distinto de "este profesional no atiende hoy", y la
     // pantalla tiene que decir cuál de las dos cosas es.
     html += '<div class="caja aviso"><h3>El centro está cerrado</h3>' +
             '<p>' + txt(g.cerrado.motivo) + '.</p>' +
@@ -1657,7 +1681,7 @@ function filaDeTurno(t, medicoId) {
   ];
 }
 
-var COLUMNAS_TURNO = ['Médico', 'Hora', 'Paciente', 'Documento', 'Teléfono',
+var COLUMNAS_TURNO = ['Profesional', 'Hora', 'Paciente', 'Documento', 'Teléfono',
                       'Tipo de consulta', 'Estado', 'Sobreturno', 'Turno'];
 
 function exportarDia() {
@@ -1937,9 +1961,18 @@ function pintarTablero(fecha, totales) {
 
   html += '<div class="tablero">' + columnas.map(function (c) {
     var g = c.agenda;
+    var puedeDar = puede('turno.crear');
     var filas = g.franjas.map(function (f) {
       if (f.libre) {
-        return '<li class="libre">' + txt(f.hora) + ' · libre</li>';
+        // Desde el tablero también se da turno: recepción trabaja mirando el
+        // día entero del centro, y obligarla a entrar a la agenda de cada
+        // profesional para cargar uno era un rodeo sin motivo.
+        return '<li class="libre' + (puedeDar ? ' clicable' : '') + '"' +
+               (puedeDar ? ' data-libre="' + txt(f.inicio) + '"' +
+                           ' data-med="' + txt(c.medico.id) + '"' +
+                           ' tabindex="0" role="button"' +
+                           ' title="Dar turno a las ' + txt(f.hora) + '"' : '') + '>' +
+               txt(f.hora) + ' · ' + (puedeDar ? 'dar turno' : 'libre') + '</li>';
       }
       return '<li data-turno="' + txt(f.turno.id) + '" data-med="' + txt(c.medico.id) + '">' +
              '<span class="h">' + txt(f.hora) + '</span> ' +
@@ -1953,13 +1986,13 @@ function pintarTablero(fecha, totales) {
              ' ' + insignia(t.estado) + '</li>';
     })).join('');
 
-    // Igual que en la vista de semana: el nombre del médico va como texto y
+    // Igual que en la vista de semana: el nombre del profesional va como texto y
     // no adentro de un botón, porque los botones no se imprimen y las
     // columnas del papel salían sin saber de quién eran.
     var esp = nombreDe(S.sesion.catalogos.especialidades, c.medico.especialidad_id);
     return '<div class="col-medico">' +
       '<h4 class="rotulo clicable" data-med-ir="' + txt(c.medico.id) + '" ' +
-        'tabindex="0" role="button" title="Ver la agenda de este médico">' +
+        'tabindex="0" role="button" title="Ver la agenda de este profesional">' +
         txt(c.medico.apellido + ', ' + c.medico.nombre) +
         (esp ? '<small>' + txt(esp) + '</small>' : '') + '</h4>' +
       '<div class="cuenta">' + g.resumen.ocupadas + ' de ' + g.resumen.total + ' · ' +
@@ -1981,15 +2014,28 @@ function pintarTablero(fecha, totales) {
     b.addEventListener('click', ir);
     b.addEventListener('keydown', ir);
   });
-  $('ag-cuerpo').addEventListener('click', function (e) {
-    var li = e.target.closest ? e.target.closest('li[data-turno]') : null;
+  function activarTablero(e) {
+    if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+    var li = e.target.closest ? e.target.closest('li[data-turno], li[data-libre]') : null;
     if (!li) return;
+    e.preventDefault();
+
     var g = A.grillas[claveAgenda(li.dataset.med, fecha)];
     if (!g) return;
+
+    if (li.dataset.libre) {
+      var f = g.franjas.filter(function (x) { return x.inicio === li.dataset.libre; })[0];
+      if (f) darTurno(f, li.dataset.med, fecha);
+      return;
+    }
     var t = null;
     g.franjas.forEach(function (x) { if (x.turno && x.turno.id === li.dataset.turno) t = x.turno; });
     g.sobreturnos.forEach(function (x) { if (x.id === li.dataset.turno) t = x; });
     if (t) verTurno(t, li.dataset.med, fecha);
+  }
+  $('ag-cuerpo').addEventListener('keydown', activarTablero);
+  $('ag-cuerpo').addEventListener('click', function (e) {
+    activarTablero(e);
   });
 }
 </script>
@@ -2093,7 +2139,7 @@ function montarBuscador(idCaja, alElegir, alDarDeAlta) {
       }
     }
     if (puede('paciente.crear')) {
-      html += '<p><button class="btn chico" id="bp-nuevo">No está: dar de alta</button></p>';
+      html += '<p><button class="btn chico" id="bp-nuevo">Cargar paciente</button></p>';
     }
     $('bp-resultados').innerHTML = html;
 
@@ -2142,7 +2188,11 @@ function formPacienteNuevo(textoInicial, alCrear) {
             '<option>CI</option><option>PAS</option><option>OTRO</option>' +
           '</select></div>' +
         '<div class="campo"><label for="p-doc">Número de documento</label>' +
-          '<input type="text" id="p-doc" style="width:100%" value="' +
+          // inputmode numeric levanta el teclado numérico en una tablet, y
+          // solo-dígitos se fuerza al tipear (ver abajo): en el mostrador se
+          // escribe 30.111.222 por costumbre, y ese punto rompe la unicidad.
+          '<input type="text" id="p-doc" inputmode="numeric" autocomplete="off" ' +
+          'maxlength="11" placeholder="sin puntos" style="width:100%" value="' +
           txt(soloNumeros ? textoInicial : '') + '"></div>' +
         '<div class="campo"><label for="p-nac">Fecha de nacimiento</label>' +
           '<input type="date" id="p-nac" style="width:100%"></div>' +
@@ -2150,8 +2200,10 @@ function formPacienteNuevo(textoInicial, alCrear) {
       '<div class="fila">' +
         '<div class="campo"><label for="p-sexo">Sexo</label>' +
           '<select id="p-sexo" style="width:100%">' +
-            '<option value="">Sin indicar</option><option value="F">F</option>' +
-            '<option value="M">M</option><option value="X">X</option>' +
+            '<option value="">—</option>' +
+            '<option value="Femenino">Femenino</option>' +
+            '<option value="Masculino">Masculino</option>' +
+            '<option value="Sin especificar">Sin especificar</option>' +
           '</select></div>' +
         '<div class="campo"><label for="p-tel">Teléfono</label>' +
           '<input type="tel" id="p-tel" style="width:100%"></div>' +
@@ -2159,13 +2211,23 @@ function formPacienteNuevo(textoInicial, alCrear) {
           '<span style="color:var(--faint)">(opcional)</span></label>' +
           '<input type="tel" id="p-tel2" style="width:100%"></div>' +
       '</div>' +
+      '<div class="fila">' +
+        '<div class="campo"><label for="p-obra">Obra social</label>' +
+          '<input type="text" id="p-obra" style="width:100%" ' +
+          'placeholder="IOMA, PAMI, ninguna…"></div>' +
+        '<div class="campo" style="flex:2 1 300px"><label for="p-dom">Domicilio</label>' +
+          '<input type="text" id="p-dom" style="width:100%" ' +
+          'placeholder="Calle 20 1234, Balcarce">' +
+          '<div class="ayuda">Después se puede abrir en Google Maps desde la ficha.</div>' +
+        '</div>' +
+      '</div>' +
       '<div class="campo"><label for="p-obs">Observaciones administrativas ' +
         '<span style="color:var(--faint)">(opcional)</span></label>' +
         '<input type="text" id="p-obs" style="width:100%">' +
         '<div class="ayuda">Datos de contacto o de gestión. No es información clínica: ' +
         'este sistema no es una historia clínica.</div></div>' +
       '<div id="p-coincidencias"></div>',
-    textoAceptar: 'Dar de alta',
+    textoAceptar: 'Cargar paciente',
     alAceptar: function () {
       var datos = {
         idem: idem,
@@ -2173,12 +2235,34 @@ function formPacienteNuevo(textoInicial, alCrear) {
         tipo_documento: valorModal('p-tipodoc'), nro_documento: valorModal('p-doc'),
         fecha_nacimiento: valorModal('p-nac'), sexo: valorModal('p-sexo'),
         telefono: valorModal('p-tel'), telefono_alt: valorModal('p-tel2'),
+        obra_social: valorModal('p-obra'), domicilio: valorModal('p-dom'),
         observaciones_adm: valorModal('p-obs')
       };
       if (!datos.apellido || !datos.nombre) {
         throw { codigo: 'CAMPOS_FALTANTES', mensaje: 'Hacen falta el apellido y el nombre.' };
       }
       return crearPacienteConAviso(datos, alCrear);
+    }
+  });
+  soloNumerosEn('p-doc');
+}
+
+/**
+ * Deja que en un campo entren únicamente dígitos.
+ *
+ * Se limpia al tipear y al pegar. El servidor lo comprueba igual —la pantalla
+ * nunca es la garantía— pero rechazar un documento DESPUÉS de que la persona
+ * completó toda la ficha es una forma pésima de enseñarle la regla.
+ */
+function soloNumerosEn(id) {
+  var el = $(id);
+  if (!el) return;
+  el.addEventListener('input', function () {
+    var limpio = this.value.replace(/\D/g, '');
+    if (limpio !== this.value) {
+      var pos = this.selectionStart - (this.value.length - limpio.length);
+      this.value = limpio;
+      try { this.setSelectionRange(pos, pos); } catch (e) {}
     }
   });
 }
@@ -2448,7 +2532,7 @@ function formCancelar(turno, fecha, medicoId) {
         '<p>No se borra nada: queda registrado quién lo canceló y por qué.</p></div>' +
       '<div class="campo"><label for="c-motivo">Motivo</label>' +
         '<input type="text" id="c-motivo" style="width:100%" ' +
-        'placeholder="Lo pidió el paciente, el médico no atiende…"></div>',
+        'placeholder="Lo pidió el paciente, el profesional no atiende…"></div>',
     textoAceptar: 'Cancelar el turno',
     alAceptar: function () {
       var motivo = valorModal('c-motivo');
@@ -2581,6 +2665,289 @@ function nuevoSobreturno(medicoId, fecha) {
 
 <script>
 // =====================================================================
+//  Vista: pacientes.
+//
+//  ================================================================
+//   ESTA PANTALLA ES LA MÁS SENSIBLE DEL SISTEMA
+//
+//   Todo lo demás muestra los pacientes de UNA agenda o de UN día. Acá se
+//   ve el padrón: toda la gente que pasó por el centro. Por eso:
+//
+//   · La pestaña solo aparece con el alcance TODOS de `paciente.ver`. Ni
+//     enfermería ni los profesionales la ven: ellos tienen el buscador,
+//     que les muestra a quien tiene turno con ellos o en el día.
+//   · El LISTADO no trae teléfonos ni domicilios. Esos aparecen al abrir
+//     una ficha, y abrir una ficha queda auditado: es la única forma de
+//     contestar "¿quién miró los datos de esta persona?" ante un reclamo.
+//   · No hay ningún dato clínico, y no lo va a haber. Esto es una agenda.
+//  ================================================================
+// =====================================================================
+
+var P = { texto: '', inactivos: false, gen: 0 };
+
+function vigenteP(gen) { return gen === P.gen && S.vista === 'pacientes'; }
+
+function montarPacientes(cont) {
+  P.gen++;
+  cont.innerHTML =
+    '<div class="barra">' +
+      '<input type="text" id="pac-buscar" placeholder="Buscar por apellido, nombre o documento…" ' +
+        'style="flex:1 1 320px" value="' + txt(P.texto) + '" autocomplete="off">' +
+      '<label class="en-linea"><input type="checkbox" id="pac-inactivos"' +
+        (P.inactivos ? ' checked' : '') + '> Ver también los dados de baja</label>' +
+      (puede('paciente.crear')
+        ? '<button class="btn principal" id="pac-nuevo">Cargar paciente</button>' : '') +
+      '<span class="sello" id="pac-cuenta"></span>' +
+    '</div>' +
+    '<main><div id="pac-avisos"></div><div id="pac-cuerpo">' +
+      '<div class="cargando">Cargando…</div></div></main>';
+
+  $('pac-buscar').addEventListener('input', function () {
+    P.texto = this.value;
+    // Se espera a que deje de escribir: un pedido por tecla llenaría la cola
+    // y haría más lento justo lo que se quiere que sea rápido.
+    if (P.reloj) clearTimeout(P.reloj);
+    P.reloj = setTimeout(cargarPacientes, 350);
+  });
+  $('pac-inactivos').addEventListener('change', function () {
+    P.inactivos = this.checked;
+    cargarPacientes();
+  });
+  if ($('pac-nuevo')) {
+    $('pac-nuevo').addEventListener('click', function () {
+      formPacienteNuevo('', function (p) { cargarPacientes(); verPaciente(p.id); });
+    });
+  }
+
+  cargarPacientes();
+}
+
+function cargarPacientes() {
+  var gen = P.gen;
+  var cuerpo = $('pac-cuerpo');
+  if (!cuerpo) return;
+  cuerpo.innerHTML = '<div class="cargando">Buscando…</div>';
+
+  llamar('pacientes.listar', { texto: P.texto, inactivos: P.inactivos })
+    .then(function (r) {
+      if (!vigenteP(gen)) return;
+      pintarPacientes(r);
+    })
+    .catch(function (err) {
+      if (!vigenteP(gen)) return;
+      mostrarError(err, $('pac-cuerpo'), cargarPacientes);
+    });
+}
+
+function pintarPacientes(r) {
+  $('pac-cuenta').textContent = r.total + ' paciente' + (r.total === 1 ? '' : 's');
+
+  if (!r.pacientes.length) {
+    $('pac-cuerpo').innerHTML = P.texto
+      ? '<div class="caja"><h3>Nadie con ese dato</h3>' +
+        '<p>Probá con menos letras, o con el número de documento.</p></div>'
+      : '<div class="caja"><h3>Todavía no hay pacientes</h3>' +
+        '<p>Se cargan al dar el primer turno, o con el botón <b>Cargar paciente</b>.</p></div>';
+    return;
+  }
+
+  var html = '';
+  if (r.total > r.tope) {
+    html += '<div class="caja aviso"><p>Se muestran los primeros <b>' + r.tope +
+      '</b> de ' + r.total + '. Usá el buscador de arriba para encontrar a alguien ' +
+      'puntual: busca sobre el padrón entero, no sobre esta lista.</p></div>';
+  }
+
+  html += '<div class="tabla-cont"><table><thead><tr>' +
+    '<th>Paciente</th><th>Documento</th><th>Edad</th><th>Obra social</th><th></th>' +
+    '</tr></thead><tbody>' +
+    r.pacientes.map(function (p) {
+      return '<tr' + (p.activo ? '' : ' class="inactiva"') + '>' +
+        '<td><b>' + txt(p.apellido + ', ' + p.nombre) + '</b>' +
+          (p.activo ? '' : ' <span class="pill no">Baja</span>') + '</td>' +
+        '<td class="num">' + txt(p.documento) + '</td>' +
+        '<td class="num">' + (p.edad === '' ? '—' : txt(String(p.edad))) + '</td>' +
+        '<td>' + txt(p.obra_social || '—') + '</td>' +
+        '<td class="acciones"><button class="btn chico" data-pac="' + txt(p.id) +
+          '">Ver ficha</button></td></tr>';
+    }).join('') + '</tbody></table></div>';
+
+  $('pac-cuerpo').innerHTML = html;
+  $$('#pac-cuerpo button[data-pac]').forEach(function (b) {
+    b.addEventListener('click', function () { verPaciente(b.dataset.pac); });
+  });
+}
+
+// ---------------------------------------------------------------- la ficha
+
+function verPaciente(id) {
+  avisar('Abriendo la ficha…');
+  llamar('paciente.ver', { paciente_id: id })
+    .then(function (r) { pintarFicha(r.paciente); })
+    .catch(function (err) { mostrarError(err, null); });
+}
+
+function pintarFicha(p) {
+  var filas = [
+    ['Documento', p.documento],
+    ['Fecha de nacimiento', p.fecha_nacimiento
+        ? fechaCorta(p.fecha_nacimiento) + (p.edad === '' ? '' : '  ·  ' + p.edad + ' años')
+        : ''],
+    ['Sexo', p.sexo],
+    ['Obra social', p.obra_social],
+    ['Teléfono', p.telefono],
+    ['Otro teléfono', p.telefono_alt],
+    ['Correo', p.email]
+  ];
+
+  var html = '<div class="tabla-cont"><table><tbody>' +
+    filas.map(function (f) {
+      return '<tr><td class="rotulo-dato">' + txt(f[0]) + '</td>' +
+             '<td class="dato">' + (f[1] ? txt(String(f[1])) : '—') + '</td></tr>';
+    }).join('') +
+    '<tr><td class="rotulo-dato">Domicilio</td><td class="dato">' +
+      enlaceMapa(p.domicilio) + '</td></tr>' +
+    '</tbody></table></div>';
+
+  if (p.observaciones_adm) {
+    html += '<div class="caja"><h3>Observaciones administrativas</h3><p>' +
+            txt(p.observaciones_adm) + '</p></div>';
+  }
+
+  if (p.ultimos_turnos && p.ultimos_turnos.length) {
+    html += '<h2 style="margin-top:16px">Últimos turnos</h2>' +
+      '<div class="tabla-cont"><table><thead><tr><th>Fecha</th><th>Hora</th>' +
+      '<th>Profesional</th><th>Estado</th></tr></thead><tbody>' +
+      p.ultimos_turnos.map(function (t) {
+        return '<tr><td class="num">' + txt(fechaCorta(t.fecha)) + '</td>' +
+          '<td class="num">' + txt(t.hora) + (t.es_sobreturno ? ' +' : '') + '</td>' +
+          '<td>' + txt(nombreMedico(t.medico_id)) + '</td>' +
+          '<td>' + insignia(t.estado) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  } else if (p.ultimos_turnos) {
+    html += '<p class="ayuda">Sin turnos registrados.</p>';
+  }
+
+  if (!p.activo) {
+    html = '<div class="caja aviso"><h3>Paciente dado de baja</h3>' +
+      '<p>No aparece en las búsquedas ni se le pueden dar turnos nuevos. ' +
+      'Sus turnos anteriores siguen en el sistema.</p></div>' + html;
+  }
+
+  abrirModal({
+    titulo: nombrePaciente(p),
+    ancho: 640,
+    cuerpo: html,
+    textoAceptar: puede('paciente.editar') ? 'Editar' : null,
+    alAceptar: puede('paciente.editar') ? function () { formPacienteEditar(p); return false; } : null
+  });
+}
+
+/**
+ * El domicilio, como enlace a Google Maps.
+ *
+ * Se le agrega "Balcarce, Buenos Aires, Argentina": sin eso, "Calle 20 1234"
+ * cae en cualquier ciudad del país y el enlace es peor que no tenerlo.
+ *
+ * Va como BÚSQUEDA, no como coordenada: nadie carga el domicilio con
+ * precisión de GPS, y una búsqueda tolera "20 e/ 15 y 17" o un barrio suelto,
+ * que es como se anotan las direcciones de verdad en un mostrador.
+ */
+function enlaceMapa(domicilio) {
+  if (!domicilio) return '—';
+  var consulta = encodeURIComponent(domicilio + ', Balcarce, Buenos Aires, Argentina');
+  return '<a href="https://www.google.com/maps/search/?api=1&query=' + consulta + '" ' +
+         'target="_blank" rel="noopener">' + txt(domicilio) + '</a>' +
+         '<span class="ayuda">Abre en Google Maps, en una pestaña nueva.</span>';
+}
+
+// ---------------------------------------------------------------- editar
+
+function formPacienteEditar(p) {
+  var idem = nuevaIdem();
+  function opcionSexo(v) {
+    return '<option value="' + txt(v) + '"' +
+           (String(p.sexo) === v ? ' selected' : '') + '>' + txt(v) + '</option>';
+  }
+
+  abrirModal({
+    titulo: 'Editar ' + nombrePaciente(p),
+    ancho: 620,
+    cuerpo:
+      '<div class="fila">' +
+        '<div class="campo"><label for="e-apellido">Apellido</label>' +
+          '<input type="text" id="e-apellido" style="width:100%" value="' +
+          txt(p.apellido) + '"></div>' +
+        '<div class="campo"><label for="e-nombre">Nombre</label>' +
+          '<input type="text" id="e-nombre" style="width:100%" value="' +
+          txt(p.nombre) + '"></div>' +
+      '</div>' +
+      '<div class="fila">' +
+        '<div class="campo"><label for="e-doc">Número de documento</label>' +
+          '<input type="text" id="e-doc" inputmode="numeric" maxlength="11" ' +
+          'placeholder="sin puntos" style="width:100%" value="' +
+          txt(p.nro_documento || '') + '"></div>' +
+        '<div class="campo"><label for="e-nac">Fecha de nacimiento</label>' +
+          '<input type="date" id="e-nac" style="width:100%" value="' +
+          txt(String(p.fecha_nacimiento || '').substring(0, 10)) + '"></div>' +
+        '<div class="campo"><label for="e-sexo">Sexo</label>' +
+          '<select id="e-sexo" style="width:100%">' +
+            '<option value="">—</option>' + opcionSexo('Femenino') +
+            opcionSexo('Masculino') + opcionSexo('Sin especificar') +
+          '</select></div>' +
+      '</div>' +
+      '<div class="fila">' +
+        '<div class="campo"><label for="e-tel">Teléfono</label>' +
+          '<input type="tel" id="e-tel" style="width:100%" value="' +
+          txt(p.telefono || '') + '"></div>' +
+        '<div class="campo"><label for="e-tel2">Otro teléfono</label>' +
+          '<input type="tel" id="e-tel2" style="width:100%" value="' +
+          txt(p.telefono_alt || '') + '"></div>' +
+        '<div class="campo"><label for="e-obra">Obra social</label>' +
+          '<input type="text" id="e-obra" style="width:100%" value="' +
+          txt(p.obra_social || '') + '"></div>' +
+      '</div>' +
+      '<div class="campo"><label for="e-dom">Domicilio</label>' +
+        '<input type="text" id="e-dom" style="width:100%" value="' +
+        txt(p.domicilio || '') + '"></div>' +
+      '<div class="campo"><label for="e-obs">Observaciones administrativas</label>' +
+        '<input type="text" id="e-obs" style="width:100%" value="' +
+        txt(p.observaciones_adm || '') + '">' +
+        '<div class="ayuda">No es información clínica: este sistema no es una ' +
+        'historia clínica.</div></div>' +
+      (puede('paciente.baja')
+        ? '<div class="campo"><label><input type="checkbox" id="e-activo"' +
+          (p.activo ? ' checked' : '') + '> Paciente activo</label>' +
+          '<div class="ayuda">Desmarcado, deja de aparecer en las búsquedas. ' +
+          'No se borra nada y sus turnos quedan.</div></div>'
+        : ''),
+    textoAceptar: 'Guardar',
+    alAceptar: function () {
+      var datos = {
+        idem: idem, paciente_id: p.id, version: p.version,
+        apellido: valorModal('e-apellido'), nombre: valorModal('e-nombre'),
+        nro_documento: valorModal('e-doc'), fecha_nacimiento: valorModal('e-nac'),
+        sexo: valorModal('e-sexo'),
+        telefono: valorModal('e-tel'), telefono_alt: valorModal('e-tel2'),
+        obra_social: valorModal('e-obra'), domicilio: valorModal('e-dom'),
+        observaciones_adm: valorModal('e-obs')
+      };
+      if (puede('paciente.baja')) datos.activo = valorModal('e-activo');
+      if (!datos.apellido || !datos.nombre) {
+        throw { codigo: 'CAMPOS_FALTANTES', mensaje: 'Hacen falta el apellido y el nombre.' };
+      }
+      return llamar('paciente.editar', datos).then(function () {
+        avisar('Ficha actualizada');
+        if (S.vista === 'pacientes') cargarPacientes();
+      });
+    }
+  });
+  soloNumerosEn('e-doc');
+}
+</script>
+
+<script>
+// =====================================================================
 //  Vista: configuracion.
 //  Catalogos, medicos, horarios de atencion, y usuarios con sus roles.
 // =====================================================================
@@ -2595,7 +2962,7 @@ var C = { seccion: null, medicoId: null, catalogoActual: null, gen: 0 };
 function vigente(gen) { return gen === C.gen && S.vista === 'config'; }
 
 var SECCIONES_CONFIG = [
-  { id:'medicos',       etiqueta:'Médicos',      permiso:'config.catalogos', pintar:pintarMedicos },
+  { id:'medicos',       etiqueta:'Profesionales',      permiso:'config.catalogos', pintar:pintarMedicos },
   { id:'horarios',      etiqueta:'Horarios',     permiso:'config.plantillas',pintar:pintarHorarios },
   { id:'especialidades',etiqueta:'Especialidades',permiso:'config.catalogos',pintar:function(c){pintarCatalogo(c,'ESPECIALIDADES');} },
   { id:'consultorios',  etiqueta:'Consultorios', permiso:'config.catalogos', pintar:function(c){pintarCatalogo(c,'CONSULTORIOS');} },
@@ -2888,7 +3255,7 @@ function guardarFeriado(datos) {
           '<div class="caja aviso"><h3>' + af.length + ' turno(s) para ese día</h3>' +
           '<p><b>No se van a cancelar.</b> Van a seguir existiendo y vas a verlos en la ' +
           'agenda de ese día, marcados, para reprogramarlos uno por uno.</p></div>' +
-          '<div class="tabla-cont"><table><thead><tr><th>Hora</th><th>Médico</th>' +
+          '<div class="tabla-cont"><table><thead><tr><th>Hora</th><th>Profesional</th>' +
           '<th>Paciente</th><th>Turno</th></tr></thead><tbody>' +
           af.map(function (t) {
             return '<tr><td class="num">' + txt(t.hora) + '</td>' +
@@ -3116,7 +3483,7 @@ function formCatalogo(catalogo, fila) {
   });
 }
 
-// ================================================================ médicos
+// ================================================================ profesionales
 
 function pintarMedicos(cont) {
   var gen = C.gen;
@@ -3126,16 +3493,16 @@ function pintarMedicos(cont) {
     var medicos = r.medicos;
     var esp = S.sesion.catalogos.especialidades;
 
-    var html = '<section class="bloque"><h2>Médicos' +
-      '<span class="der"><button class="btn principal chico" id="med-nuevo">Agregar médico</button></span></h2>';
+    var html = '<section class="bloque"><h2>Profesionales' +
+      '<span class="der"><button class="btn principal chico" id="med-nuevo">Agregar Profesional</button></span></h2>';
 
     if (!esp.length) {
       html += '<div class="caja aviso"><h3>Primero cargá una especialidad</h3>' +
-        '<p>Cada médico necesita una especialidad asignada.</p></div>';
+        '<p>Cada profesional necesita una especialidad asignada.</p></div>';
     }
 
     if (!medicos.length) {
-      html += '<div class="vacio-msg">Todavía no hay médicos cargados.</div>';
+      html += '<div class="vacio-msg">Todavía no hay profesionales cargados.</div>';
     } else {
       html += '<div class="tabla-cont"><table><thead><tr>' +
         '<th>Apellido y nombre</th><th>Especialidad</th><th>Matrícula</th>' +
@@ -3202,7 +3569,7 @@ function formMedico(m) {
 
   var idem = nuevaIdem();
   abrirModal({
-    titulo: m ? 'Editar médico' : 'Nuevo médico',
+    titulo: m ? 'Editar profesional' : 'Nuevo profesional',
     cuerpo: cuerpo,
     textoAceptar: 'Guardar',
     alAceptar: function () {
@@ -3217,7 +3584,7 @@ function formMedico(m) {
 
       guardarSinEsperar({
         accion: 'config.medico.guardar', datos: datos,
-        ok: m ? 'Cambios guardados' : 'Médico agregado',
+        ok: m ? 'Cambios guardados' : 'Profesional agregado',
         aplicar: function () {
           return aplicarLocal('config.medicos.listar', {}, function (l) {
             ponerEnLista(l.medicos, {
@@ -3243,8 +3610,8 @@ function formMedico(m) {
 function pintarHorarios(cont) {
   var medicos = S.sesion.catalogos.medicos;
   if (!medicos.length) {
-    cont.innerHTML = '<div class="caja aviso"><h3>Primero cargá los médicos</h3>' +
-      '<p>Los horarios de atención se definen por médico.</p></div>';
+    cont.innerHTML = '<div class="caja aviso"><h3>Primero cargá los profesionales</h3>' +
+      '<p>Los horarios de atención se definen por profesional.</p></div>';
     return;
   }
   C.medicoId = C.medicoId || medicos[0].id;
@@ -3252,7 +3619,7 @@ function pintarHorarios(cont) {
   cont.innerHTML =
     '<section class="bloque"><h2>Horarios de atención' +
       '<span class="der">' +
-        '<select id="hor-medico" aria-label="Médico">' +
+        '<select id="hor-medico" aria-label="Profesional">' +
           opciones(medicos, C.medicoId, function (m) { return m.apellido + ', ' + m.nombre; }) +
         '</select> ' +
         '<button class="btn principal chico" id="hor-nuevo">Agregar bloque</button>' +
@@ -3271,7 +3638,7 @@ function pintarHorarios(cont) {
     var ps = r.plantillas.filter(function (p) { return p.activo; });
     if (!ps.length) {
       $('hor-lista').innerHTML =
-        '<div class="vacio-msg">Este médico todavía no tiene horarios de atención.<br>' +
+        '<div class="vacio-msg">Este profesional todavía no tiene horarios de atención.<br>' +
         'Sin al menos un bloque, su agenda no muestra ninguna franja.</div>';
       return;
     }
@@ -3335,7 +3702,7 @@ function formPlantilla(p) {
           opciones(S.sesion.catalogos.consultorios, p ? p.consultorio_id : '',
                    null, 'Sin asignar') +
         '</select>' +
-        '<div class="ayuda">Solo si este médico atiende siempre en el mismo. ' +
+        '<div class="ayuda">Solo si este profesional atiende siempre en el mismo. ' +
         'Dejalo sin asignar si suele cambiar: el consultorio se puede indicar ' +
         'después en cada turno.</div></div>' +
     '</div>' +
@@ -3501,7 +3868,7 @@ function confirmarBajaPlantilla(p) {
 
 var ETIQUETA_ROL = {
   ADMINISTRADOR: 'Administrador', RECEPCION: 'Recepción',
-  ENFERMERIA: 'Enfermería', MEDICO: 'Médico'
+  ENFERMERIA: 'Enfermería', MEDICO: 'Profesional'
 };
 
 function pintarUsuarios(cont) {
@@ -3511,22 +3878,23 @@ function pintarUsuarios(cont) {
     if (!vigente(gen)) return;
     var us = r.usuarios;
     cont.innerHTML =
-      '<section class="bloque"><h2>Usuarios y roles' +
+      '<section class="bloque ancha"><h2>Usuarios y roles' +
         '<span class="der"><button class="btn principal chico" id="usr-nuevo">Agregar usuario</button></span></h2>' +
         '<div class="caja"><p>Un usuario puede tener <b>varios roles a la vez</b>. Los permisos ' +
-        'se suman: quien es Médico y Administrador ve todas las agendas, y además tiene la ' +
+        'se suman: quien es Profesional y Administrador ve todas las agendas, y además tiene la ' +
         'suya en la pantalla de inicio.</p></div>' +
-        '<div class="tabla-cont"><table><thead><tr><th>Correo</th><th>Nombre</th>' +
+        '<div class="tabla-cont"><table class="usuarios"><thead><tr>' +
+        '<th>Correo</th><th>Nombre</th>' +
         r.roles_disponibles.map(function (rol) {
-          return '<th style="text-align:center">' + txt(ETIQUETA_ROL[rol] || rol) + '</th>';
+          return '<th class="rol-col">' + txt(ETIQUETA_ROL[rol] || rol) + '</th>';
         }).join('') +
-        '<th>Médico asociado</th><th>Activo</th><th></th></tr></thead><tbody>' +
+        '<th>Profesional Asociado</th><th>Activo</th><th></th></tr></thead><tbody>' +
         us.map(function (u) {
           return '<tr' + (u.activo ? '' : ' class="inactiva"') + '>' +
             '<td class="num">' + txt(u.email) + '</td>' +
             '<td>' + txt(((u.nombre || '') + ' ' + (u.apellido || '')).trim()) + '</td>' +
             r.roles_disponibles.map(function (rol) {
-              return '<td style="text-align:center">' +
+              return '<td class="rol-col">' +
                 (u.roles.indexOf(rol) >= 0 ? '<b style="color:var(--acento)">&#10003;</b>'
                                            : '<span style="color:var(--faint)">&middot;</span>') +
                 '</td>';
@@ -3574,12 +3942,12 @@ function formUsuario(u, roles) {
       '<div class="ayuda">Al menos uno. Los permisos de todos los roles marcados se suman.</div>' +
     '</div>' +
     '<div class="campo" id="f-medico-caja">' +
-      '<label for="f-medico">Médico asociado</label>' +
+      '<label for="f-medico">Profesional Asociado</label>' +
       '<select id="f-medico" style="width:100%">' +
         opciones(S.sesion.catalogos.medicos, u ? u.medico_id : '',
                  function (m) { return m.apellido + ', ' + m.nombre; }, 'Elegir…') +
       '</select>' +
-      '<div class="ayuda">Obligatorio con el rol Médico: sin esto, «Mi agenda» no sabe qué mostrar.</div>' +
+      '<div class="ayuda">Obligatorio con el rol Profesional: sin esto, «Mi agenda» no sabe qué mostrar.</div>' +
     '</div>' +
     '<div class="campo"><label><input type="checkbox" id="f-activo"' +
       (!u || u.activo ? ' checked' : '') + '> Activo</label>' +
@@ -3745,7 +4113,7 @@ var ETIQUETA_ACCION = {
 };
 
 var ETIQUETA_ENTIDAD = {
-  TURNO: 'Turno', PACIENTE: 'Paciente', USUARIO: 'Usuario', MEDICO: 'Médico',
+  TURNO: 'Turno', PACIENTE: 'Paciente', USUARIO: 'Usuario', MEDICO: 'Profesional',
   PLANTILLA: 'Horario de atención', EXCEPCION: 'Excepción de agenda',
   ESPECIALIDADES: 'Especialidad', CONSULTORIOS: 'Consultorio',
   TIPOS_CONSULTA: 'Tipo de consulta'
@@ -3753,7 +4121,7 @@ var ETIQUETA_ENTIDAD = {
 
 var ETIQUETA_CAMPO = {
   inicio: 'Inicio', fin: 'Fin', fecha: 'Fecha', estado: 'Estado',
-  medico_id: 'Médico', paciente_id: 'Paciente', consultorio_id: 'Consultorio',
+  medico_id: 'Profesional', paciente_id: 'Paciente', consultorio_id: 'Consultorio',
   especialidad_id: 'Especialidad', tipo_consulta_id: 'Tipo de consulta',
   turno_nuevo: 'Turno nuevo', motivo: 'Motivo', observaciones: 'Observaciones',
   roles: 'Roles', activo: 'Activo', nombre: 'Nombre', apellido: 'Apellido',
@@ -3853,7 +4221,7 @@ function pintarOcupacion(cont) {
     }
 
     html += '<div class="tabla-cont"><table><thead><tr>' +
-      '<th>Médico</th><th>Especialidad</th><th>Ofrecidas</th><th>Dados</th>' +
+      '<th>Profesional</th><th>Especialidad</th><th>Ofrecidas</th><th>Dados</th>' +
       '<th>Ocupación</th><th>Atendidos</th><th>Ausentes</th><th>Ausentismo</th>' +
       '<th>Cancelados</th><th>Sobreturnos</th></tr></thead><tbody>' +
       r.medicos.map(function (m) {
@@ -3873,7 +4241,7 @@ function pintarOcupacion(cont) {
       accion: 'exportar.reporte', origen: 'reporte.ocupacion',
       titulo: 'Ocupación',
       subtitulo: fechaCorta(r.desde) + ' al ' + fechaCorta(r.hasta),
-      columnas: ['Médico', 'Especialidad', 'Ofrecidas', 'Dados', 'Ocupación %',
+      columnas: ['Profesional', 'Especialidad', 'Ofrecidas', 'Dados', 'Ocupación %',
                  'Atendidos', 'Ausentes', 'Ausentismo %', 'Cancelados', 'Sobreturnos'],
       filas: r.medicos.map(function (m) {
         return [m.medico, nombreDe(S.sesion.catalogos.especialidades, m.especialidad_id),
@@ -3952,7 +4320,7 @@ function pintarFueraPlantilla(cont) {
   pedirReporte(cont, 'reporte.fuera_plantilla', {}, function (r) {
     var html = '<section class="bloque"><h2>Turnos fuera del horario configurado</h2>' +
       '<div class="caja aviso"><p>Estos turnos <b>siguen existiendo y siguen siendo ' +
-      'válidos</b>, pero ya no caen en ninguna franja del horario actual del médico. ' +
+      'válidos</b>, pero ya no caen en ninguna franja del horario actual del profesional. ' +
       'Pasa cuando se cambia un horario de atención: el sistema <b>no los cancela</b>, ' +
       'porque eso dejaría pacientes sin turno y sin aviso. Hay que reprogramarlos o ' +
       'cancelarlos uno por uno.</p></div>';
@@ -3968,7 +4336,7 @@ function pintarFueraPlantilla(cont) {
       accion: 'exportar.reporte', origen: 'reporte.fuera_plantilla',
       titulo: 'Turnos fuera del horario configurado',
       subtitulo: 'Desde ' + fechaCorta(r.desde),
-      columnas: ['Fecha', 'Hora', 'Médico', 'Paciente', 'Turno', 'Estado'],
+      columnas: ['Fecha', 'Hora', 'Profesional', 'Paciente', 'Turno', 'Estado'],
       filas: r.filas.map(function (f) {
         return [fechaCorta(f.fecha), f.hora, nombreMedico(f.medico_id), f.paciente,
                 f.nro_turno, f.estado];
@@ -3976,7 +4344,7 @@ function pintarFueraPlantilla(cont) {
     };
 
     html += '<div class="tabla-cont"><table><thead><tr><th>Fecha</th><th>Hora</th>' +
-      '<th>Médico</th><th>Paciente</th><th>Turno</th><th>Estado</th><th></th>' +
+      '<th>Profesional</th><th>Paciente</th><th>Turno</th><th>Estado</th><th></th>' +
       '</tr></thead><tbody>' +
       r.filas.map(function (f) {
         return '<tr><td class="num">' + txt(fechaCorta(f.fecha)) + '</td>' +
@@ -4377,7 +4745,7 @@ function pantallaDeSalida(esWeb) {
  * A los N minutos sin tocar nada, la pantalla se tapa.
  *
  * En un mostrador la computadora queda sola con la agenda del día a la vista:
- * nombres, teléfonos y a qué médico va cada persona. Esto no impide que
+ * nombres, teléfonos y a qué profesional va cada persona. Esto no impide que
  * alguien la use —la sesión de Google sigue abierta y con un clic se vuelve—,
  * pero evita lo que de verdad pasa, que es que los datos queden expuestos a
  * quien pase por delante.
@@ -4428,6 +4796,11 @@ function bloquearPantalla() {
 var VISTAS = {
   agenda: { etiqueta: 'Agenda',        montar: montarAgenda, desmontar: desmontarAgenda,
             visible: function () { return alcance('agenda.ver').length > 0; } },
+  // Ver el padrón entero es acceso a toda la población que pasó por el
+  // centro, no a una agenda. Por eso la pestaña pide el alcance TODOS y no
+  // simplemente "poder buscar un paciente".
+  pacientes: { etiqueta: 'Pacientes', montar: montarPacientes, desmontar: null,
+            visible: function () { return alcance('paciente.ver').indexOf('TODOS') >= 0; } },
   reportes: { etiqueta: 'Reportes', montar: montarReportes, desmontar: null,
             visible: function () { return alcance('reporte.ver').length > 0 ||
                                           puede('auditoria.ver'); } },
@@ -4443,7 +4816,7 @@ var VISTAS = {
  *
  * Ahora, si ya se entró alguna vez desde este navegador, la pantalla se
  * dibuja entera de memoria antes de pedir nada: menú, nombre, selector de
- * médico, calendario. Lo único que falta es la agenda —que no se guarda,
+ * profesional, calendario. Lo único que falta es la agenda —que no se guarda,
  * porque tiene datos de pacientes— y llega enseguida.
  *
  * Que la foto sea vieja no habilita nada: el servidor revalida cada acción
@@ -4629,7 +5002,7 @@ function mostrarTiempos() {
  *
  * El costo de un pedido está en el viaje, no en los datos, y estos viajes
  * ocurren mientras ya se está mirando la agenda: no le hacen esperar a
- * nadie. Cuando después se abre Configuración o se cambia de médico, la
+ * nadie. Cuando después se abre Configuración o se cambia de profesional, la
  * respuesta ya está en el navegador y la pantalla aparece de una.
  *
  * Se espera un momento para no competir con el primer dibujado.
