@@ -442,38 +442,52 @@
                      opacity:1;cursor:default;min-width:64px;}
 
   /* ================================================================
-     LA FICHA DEL PACIENTE
+     LA FICHA DEL PACIENTE  (opcion B de la muestra)
 
-     Se abre con el telefono en la mano o con la persona enfrente. Antes era
-     una lista de once renglones donde el documento y el correo pesaban lo
-     mismo; ahora los datos que identifican a la persona van en tarjetas que
-     se leen de un vistazo, y el contacto abajo, aparte.
+     Se abre con el telefono en la mano o con la persona enfrente. Arriba,
+     quien es, en una franja: nombre y —en UN renglon— documento, edad, sexo
+     y obra social. Se leen juntos, asi que van juntos; en tarjetas separadas
+     habia que saltar de una a otra, y encima quedaban de distinto alto.
+
+     Debajo, el contacto como algo que se TOCA y no que se lee: nadie abre
+     una ficha para enterarse de que existe un telefono, la abre para llamar.
      ================================================================ */
-  .titulo-bloque{display:flex;align-items:center;gap:10px;
-                 font-size:11px;letter-spacing:.07em;text-transform:uppercase;
-                 color:var(--muted);font-weight:700;margin:18px 0 8px;}
-  .titulo-bloque::after{content:"";flex:1;height:1px;background:var(--rule);}
-  .titulo-bloque:first-child{margin-top:0;}
-  /* align-items:start es lo que evita el hueco: sin eso todas las tarjetas se
-     estiran a la altura de la mas alta -- la que tiene fecha de nacimiento al
-     pie -- y el valor queda flotando arriba de una franja vacia. */
-  .ficha-datos{display:grid;gap:8px;margin-bottom:4px;align-items:start;
-               grid-template-columns:repeat(auto-fit,minmax(150px,1fr));}
-  .ficha-datos.una{grid-template-columns:1fr;}
-  .dato-tarjeta{border:1px solid var(--rule);border-radius:5px;padding:8px 11px;
-                background:var(--surface-2);min-width:0;}
-  .dato-tarjeta .rot{display:block;font-size:11px;letter-spacing:.05em;
-                     text-transform:uppercase;color:var(--muted);font-weight:600;}
-  .dato-tarjeta .val{display:block;margin-top:3px;font-size:15px;font-weight:560;
-                     overflow-wrap:anywhere;}
-  .dato-tarjeta.grande .val{font-family:var(--mono);font-size:17px;font-weight:600;
-                            font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
-  .dato-tarjeta .val.vacio{color:var(--faint);font-style:italic;font-weight:400;
-                           font-size:14px;font-family:inherit;letter-spacing:0;}
-  .dato-tarjeta .pie{display:block;margin-top:2px;font-size:11.5px;color:var(--faint);}
-  .dato-tarjeta .val .tel-alt{display:block;font-size:14px;color:var(--muted);margin-top:2px;}
-  .dato-tarjeta .val .ayuda{display:block;font-size:11.5px;color:var(--faint);
-                            font-weight:400;font-family:inherit;letter-spacing:0;}
+  .persona{padding:14px 18px;margin:-18px -18px 14px;
+           background:var(--acento-suave);border-bottom:1px solid var(--rule);}
+  .persona h4{margin:0;font-size:20px;font-weight:700;letter-spacing:-.015em;
+              color:var(--acento-ink);overflow-wrap:anywhere;}
+  .persona.de-baja h4{color:var(--muted);text-decoration:line-through;}
+  .persona .identidad{margin:5px 0 0;font-size:13.5px;color:var(--muted);
+                      display:flex;flex-wrap:wrap;gap:0 8px;align-items:center;}
+  .persona .identidad .doc{font-family:var(--mono);font-weight:600;color:var(--ink);
+                           font-size:14px;font-variant-numeric:tabular-nums;
+                           letter-spacing:-.01em;}
+  .persona .identidad .sep{color:var(--faint);}
+  .persona .identidad .obra{background:var(--surface);border:1px solid var(--rule-fuerte);
+                            border-radius:10px;padding:1px 9px;font-size:12px;
+                            font-weight:600;color:var(--ink);}
+
+  .acciones-contacto{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+  .accion{display:inline-flex;align-items:center;gap:9px;text-decoration:none;
+          color:inherit;background:var(--surface);border:1px solid var(--rule-fuerte);
+          border-radius:6px;padding:8px 12px;min-width:0;max-width:100%;}
+  a.accion:hover{border-color:var(--acento);background:var(--acento-suave);}
+  a.accion:focus-visible{outline:2px solid var(--acento);outline-offset:2px;}
+  .accion .ico{font-size:16px;line-height:1;opacity:.75;flex:none;}
+  .accion .txt{display:flex;flex-direction:column;line-height:1.25;min-width:0;}
+  .accion .k{font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+             color:var(--muted);font-weight:700;}
+  .accion .v{font-size:14.5px;font-weight:620;overflow:hidden;
+             text-overflow:ellipsis;white-space:nowrap;}
+  .accion .v2{font-size:12px;color:var(--muted);font-weight:400;
+              overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  /* Lo que FALTA se dibuja igual, en punteado: ver que no hay telefono es la
+     mitad de para lo que se abre una ficha cuando hay que avisar algo. */
+  .accion.no{border-style:dashed;color:var(--faint);background:transparent;}
+  .accion.no .v{font-weight:400;font-style:italic;}
+  .rotulo-grupo{font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+                color:var(--muted);font-weight:700;margin:16px 0 7px;}
+
   /* La flechita de "se abre en otra pestana". El aviso completo esta en el
      globo de ayuda del enlace: antes ocupaba un renglon gris entero, tanto
      como el domicilio que explicaba. */
@@ -580,6 +594,27 @@
                 max-width:440px;text-align:center;}
   .caja-cortina h2{margin:0 0 8px;}
   .caja-cortina p{color:var(--muted);}
+  /* ================================================================
+     LA PANTALLA DE INGRESO
+
+     Dos puertas: usuario y contrasena arriba —lo que usa casi todo el
+     mundo— y Google abajo, para quien administra el sistema. Poner arriba
+     lo que usa la minoria seria hacer que la mayoria lea todos los dias un
+     cartel que no le sirve.
+     ================================================================ */
+  .caja-cortina.ingreso{text-align:left;max-width:380px;}
+  .caja-cortina.ingreso h2{text-align:center;font-size:18px;margin-bottom:16px;}
+  .caja-cortina.ingreso .campo{margin-bottom:12px;}
+  .caja-cortina.ingreso label{text-align:left;}
+  .caja-cortina.ingreso .ayuda{text-align:center;margin-top:12px;font-size:12px;
+                               color:var(--faint);}
+  .caja-cortina.ingreso .caja{text-align:left;margin-bottom:14px;}
+  /* La rayita con el "o" en el medio: dice que son dos caminos alternativos
+     y no dos pasos de lo mismo. */
+  .o-bien{display:flex;align-items:center;gap:10px;margin:16px 0 14px;
+          color:var(--faint);font-size:12px;text-transform:uppercase;
+          letter-spacing:.08em;}
+  .o-bien::before,.o-bien::after{content:"";flex:1;height:1px;background:var(--rule);}
 
   /* ---------------- impresion ----------------
      En el papel no van la barra, el menu ni los botones: va el contenido.
@@ -598,7 +633,9 @@
        pantalla. Y el encabezado pegado se vuelve encabezado repetido. */
     .tabla-scroll{max-height:none;overflow:visible;}
     .tabla-scroll thead th{position:static;}
-    .dato-tarjeta{border:1px solid #bbb;background:#fff;}
+    .persona{background:#fff;border-bottom:1px solid #999;margin:0;padding:0 0 6pt;}
+    .accion{border:1px solid #bbb;}
+    .accion.no{display:none;}
     tr,.franja,.dia-semana,.col-medico{break-inside:avoid;}
     .grilla{border:1px solid #999;}
     .franja{border-bottom:1px solid #ddd;}
@@ -737,6 +774,8 @@
          número, es saber si lo que se acaba de tocar ya se guardó. Los tiempos
          y la versión se fueron a Configuración › Velocidad. -->
     <span class="build" id="pendientes" title="Operaciones en camino al servidor"></span>
+    <button class="btn chico sin-imprimir oculto" id="mi-clave"
+            title="Cambiar mi contraseña">Contraseña</button>
     <button class="btn chico sin-imprimir" id="cuenta"
             title="Entrar con otra de las cuentas de Google abiertas">Cuenta</button>
     <button class="btn chico sin-imprimir" id="salir" title="Cerrar la pantalla">Salir</button>
@@ -749,7 +788,7 @@
 // transporte_web.html.
 var CLIENT_ID    = "873472275504-qia4rjcejadpagkgam7urn0bahq0n7ur.apps.googleusercontent.com";
 var URL_NUCLEO   = "https://script.google.com/macros/s/AKfycby-OWNY3iXvC4ssuWxHb_jogLtNbUtNlPX8bGY3IMu571aKJPFxKWoHUpE-0x4xy_kb/exec";
-var BUILD_PORTAL = "2026-09-06 16:12";
+var BUILD_PORTAL = "2026-09-06 16:36";
 var URL_PORTAL   = "";   // no aplica: esta pantalla no vive en Apps Script
 </script>
 
@@ -821,6 +860,7 @@ function ticketGuardado() {
 }
 function guardarTicket(t) {
   try { sessionStorage.setItem(CLAVE_TICKET, t); } catch (e) {}
+  CLAVE_PENDIENTE = null;
   // Recién acá se suelta el token de Google: ya no hace falta. Mientras no
   // haya ticket sigue guardado, porque si el primer pedido se pierde en el
   // camino el reintento necesita volver a presentarlo. Soltarlo antes dejaba
@@ -836,6 +876,12 @@ function olvidarTicket() {
 // ningún lado más.
 var TOKEN_PENDIENTE = null;
 
+// Lo mismo para usuario y contraseña. VIVE UN INSTANTE y en memoria: se borra
+// en cuanto llega el ticket, y nunca toca sessionStorage ni localStorage. Una
+// contraseña guardada en el navegador de un mostrador compartido es
+// exactamente lo que no puede pasar.
+var CLAVE_PENDIENTE = null;
+
 function enviarPedido(accion, datos) {
   var cuerpo = { accion: accion, datos: datos };
 
@@ -844,9 +890,12 @@ function enviarPedido(accion, datos) {
     cuerpo.ticket = t;
   } else if (TOKEN_PENDIENTE) {
     cuerpo.token = TOKEN_PENDIENTE;
+  } else if (CLAVE_PENDIENTE) {
+    cuerpo.usuario = CLAVE_PENDIENTE.usuario;
+    cuerpo.clave = CLAVE_PENDIENTE.clave;
   } else {
     return Promise.reject({ codigo: 'SIN_CREDENCIAL',
-      mensaje: 'Hay que identificarse con Google para entrar.' });
+      mensaje: 'Hay que identificarse para entrar.' });
   }
 
   var t0 = Date.now();
@@ -901,8 +950,16 @@ function arrancarIdentidad() {
   if (ticketGuardado()) return Promise.resolve();
   if (identidadLista) return identidadLista;
 
-  identidadLista = esperarAGoogle().then(function () {
-    return new Promise(function (res) {
+  identidadLista = new Promise(function (res, rej) {
+    // La pantalla se dibuja YA, sin esperar a Google: quien entra con usuario
+    // y contraseña no tiene por qué esperar a que cargue un archivo de un
+    // servidor ajeno, ni quedarse afuera si ese archivo no carga nunca.
+    pantallaDeIngreso(res, rej);
+
+    // Google se engancha cuando llega. Si no llega —sin internet hacia
+    // Google, una extensión que lo bloquea— el formulario de usuario y
+    // contraseña sigue estando, y eso se dice en pantalla.
+    esperarAGoogle().then(function () {
       google.accounts.id.initialize({
         client_id: CLIENT_ID,
         callback: function (r) {
@@ -914,14 +971,19 @@ function arrancarIdentidad() {
         cancel_on_tap_outside: false,
         itp_support: true
       });
-
-      // Se dibuja el botón SIEMPRE, no solo si falla el intento automático:
-      // el aviso emergente de Google lo bloquean muchos navegadores y
-      // extensiones, y quedarse esperando algo que nunca aparece es la peor
-      // pantalla posible. Si el ingreso automático funciona, esto se ve un
-      // instante y desaparece.
-      pantallaDeIngreso();
+      if ($('boton-google')) {
+        google.accounts.id.renderButton($('boton-google'), {
+          theme: 'outline', size: 'large', text: 'signin_with',
+          shape: 'pill', locale: 'es', width: 260
+        });
+      }
+      // El aviso emergente de Google lo bloquean muchos navegadores. Que no
+      // aparezca ya no deja a nadie mirando una pantalla que no hace nada:
+      // abajo está el formulario.
       google.accounts.id.prompt();
+    }).catch(function () {
+      var av = $('ingreso-sin-google');
+      if (av) av.classList.remove('oculto');
     });
   });
   return identidadLista;
@@ -943,24 +1005,92 @@ function esperarAGoogle() {
   });
 }
 
-function pantallaDeIngreso() {
+/**
+ * La pantalla de ingreso, con las dos puertas.
+ *
+ * ================================================================
+ *  POR QUÉ EL FORMULARIO VA PRIMERO Y GOOGLE ABAJO
+ *
+ *  Porque es lo que va a usar casi todo el mundo. En el mostrador entra
+ *  recepción y enfermería, que no tienen ni quieren tener cuenta de Google;
+ *  con Google entran los administradores, que son dos o tres y saben lo que
+ *  hacen. Poner arriba lo que usa la minoría es hacer que la mayoría lea un
+ *  cartel que no le sirve, todos los días.
+ *
+ *  La contraseña NO se guarda en ningún lado del navegador: viaja en el
+ *  primer pedido y se borra en cuanto vuelve el ticket. Ver CLAVE_PENDIENTE.
+ * ================================================================
+ */
+function pantallaDeIngreso(res, rej) {
   if ($('ingreso')) return;
   var capa = document.createElement('div');
   capa.id = 'ingreso';
   capa.className = 'cortina';
   capa.innerHTML =
-    '<div class="caja-cortina">' +
+    '<div class="caja-cortina ingreso">' +
       '<h2>Agenda de Turnos · CIC 2</h2>' +
-      '<p>Entrá con la cuenta de Google que tenés dada de alta en el sistema.</p>' +
-      '<div id="boton-google" style="display:flex;justify-content:center;margin:14px 0"></div>' +
-      '<p class="ayuda">Si en esta computadora hay varias cuentas abiertas, acá ' +
-      'elegís con cuál entrar. No hace falta cerrar ninguna sesión.</p>' +
+      '<div id="ingreso-error"></div>' +
+      '<form id="ingreso-form" autocomplete="on">' +
+        '<div class="campo"><label for="in-usuario">Usuario</label>' +
+          '<input type="text" id="in-usuario" name="username" autocomplete="username" ' +
+          'autocapitalize="off" autocorrect="off" spellcheck="false" required></div>' +
+        '<div class="campo"><label for="in-clave">Contraseña</label>' +
+          '<input type="password" id="in-clave" name="password" ' +
+          'autocomplete="current-password" required></div>' +
+        '<button type="submit" class="btn principal" id="in-entrar" ' +
+          'style="width:100%">Entrar</button>' +
+      '</form>' +
+      '<div class="o-bien"><span>o</span></div>' +
+      '<div id="boton-google" style="display:flex;justify-content:center"></div>' +
+      '<p class="ayuda oculto" id="ingreso-sin-google">No se pudo cargar el ingreso ' +
+        'de Google. Podés entrar igual con tu usuario y contraseña.</p>' +
+      '<p class="ayuda">Si no tenés usuario, pedíselo a un administrador del centro. ' +
+        'Con Google entran solamente quienes administran el sistema.</p>' +
     '</div>';
   document.body.appendChild(capa);
-  google.accounts.id.renderButton($('boton-google'), {
-    theme: 'outline', size: 'large', text: 'signin_with',
-    shape: 'pill', locale: 'es', width: 280
+
+  $('ingreso-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var u = $('in-usuario').value.trim();
+    var c = $('in-clave').value;
+    if (!u || !c) return;
+
+    $('in-entrar').disabled = true;
+    $('in-entrar').textContent = 'Entrando…';
+    $('ingreso-error').innerHTML = '';
+    CLAVE_PENDIENTE = { usuario: u, clave: c };
+
+    // Se prueba la credencial con un pedido de verdad —el mismo que hace la
+    // pantalla al arrancar—, no con uno inventado para probar. Así no hay
+    // ninguna vía de ingreso que exista solo para el formulario.
+    //
+    // Se llama a enviarPedido y NO a llamar(): llamar() recarga la página
+    // sola cuando el servidor contesta CREDENCIAL_INVALIDA, que es
+    // exactamente lo que contesta una contraseña equivocada. Con llamar(),
+    // errarle a la contraseña recargaría la pantalla en vez de decirlo.
+    enviarPedido('sesion.iniciar', {}).then(function (r) {
+      // El sobre viene con ok:false cuando el servidor rechaza: eso NO es una
+      // promesa fallada, así que hay que mirarlo a mano.
+      if (!r || !r.ok) {
+        throw { codigo: (r && r.codigo) || 'CREDENCIAL_INVALIDA',
+                mensaje: (r && r.mensaje) || 'Usuario o contraseña incorrectos.' };
+      }
+      if (r.ticket) guardarTicket(r.ticket);
+      ocultarPantallaDeIngreso();
+      res();
+    }).catch(function (err) {
+      CLAVE_PENDIENTE = null;
+      $('in-entrar').disabled = false;
+      $('in-entrar').textContent = 'Entrar';
+      $('in-clave').value = '';
+      $('ingreso-error').innerHTML =
+        '<div class="caja error"><p>' +
+        txt((err && err.mensaje) || 'No se pudo entrar.') + '</p></div>';
+      $('in-clave').focus();
+    });
   });
+
+  setTimeout(function () { if ($('in-usuario')) $('in-usuario').focus(); }, 60);
 }
 
 function ocultarPantallaDeIngreso() {
@@ -1496,7 +1626,11 @@ function abrirModal(opciones) {
         opciones.cuerpo +
       '</div>' +
       '<div class="pie">' +
-        '<button class="btn" id="modal-cancelar">Cancelar</button>' +
+        // Un diálogo que NO se puede cerrar existe para un solo caso: cambiar
+        // una contraseña provisoria. Poder saltearlo sería dejar andando una
+        // contraseña que el administrador conoce.
+        (opciones.cerrable === false ? ''
+          : '<button class="btn" id="modal-cancelar">Cancelar</button>') +
         (opciones.textoAceptar
           ? '<button class="btn principal" id="modal-aceptar">' + txt(opciones.textoAceptar) + '</button>'
           : '') +
@@ -1504,9 +1638,11 @@ function abrirModal(opciones) {
     '</div>';
   document.body.appendChild(fondo);
 
-  $('modal-cancelar').addEventListener('click', cerrarModal);
-  fondo.addEventListener('mousedown', function (e) { if (e.target === fondo) cerrarModal(); });
-  document.addEventListener('keydown', escaparModal);
+  if ($('modal-cancelar')) $('modal-cancelar').addEventListener('click', cerrarModal);
+  if (opciones.cerrable !== false) {
+    fondo.addEventListener('mousedown', function (e) { if (e.target === fondo) cerrarModal(); });
+    document.addEventListener('keydown', escaparModal);
+  }
 
   if (opciones.alAceptar) {
     $('modal-aceptar').addEventListener('click', function () {
@@ -3666,19 +3802,34 @@ function verPaciente(id) {
  *  Esta ventana se abre casi siempre con el teléfono en la mano o con la
  *  persona parada enfrente. Lo que se busca es, por ese orden: quién es
  *  (para confirmar que es la persona correcta), cómo contactarla, y cuándo
- *  vino o cuándo viene.
+ *  vino o cuándo viene. El diseño sale de la opción B de la muestra.
  *
- *  Por eso ya no es una lista de once renglones iguales donde el documento y
- *  el correo pesan lo mismo. Arriba va la identidad —documento, edad, obra
- *  social— en fichas grandes que se leen de un vistazo; después el contacto,
- *  con los teléfonos como enlaces para llamar; y al final los turnos.
+ *  DOS DECISIONES QUE NO SON DE ADORNO:
  *
- *  Un dato que no está se dice una sola vez y en gris. Lo que NO hay acá es
- *  cualquier cosa clínica, y no la va a haber: esto es una agenda.
+ *  · La identidad va en UNA LÍNEA, no en cuatro tarjetas. Documento, edad,
+ *    sexo y obra social se leen juntos —"la señora de 71, PAMI, DNI 14…"— y
+ *    partirlos en cajas obligaba a saltar de una a otra. Además las cajas
+ *    tenían distinto alto según lo que hubiera adentro, que era feo y no
+ *    tenía arreglo.
+ *
+ *  · El contacto dejó de ser algo para LEER y pasó a ser algo para TOCAR.
+ *    Nadie abre una ficha para enterarse de que existe un teléfono: la abre
+ *    para llamar, o para ver dónde vive. Por eso son botones, y el que no
+ *    tiene dato se dibuja igual, en punteado, diciendo que falta.
+ *
+ *  Lo que NO hay acá es cualquier cosa clínica, y no la va a haber.
  * ================================================================
  */
 function pintarFicha(p) {
   var html = '';
+
+  // La franja con quién es. El nombre va acá y no solo en el título de la
+  // ventana porque es el dato que se confronta contra la persona que está
+  // enfrente, y tiene que estar pegado al documento y a la edad.
+  html += '<div class="persona' + (p.activo ? '' : ' de-baja') + '">' +
+    '<h4>' + txt(nombrePaciente(p)) + '</h4>' +
+    '<p class="identidad">' + lineaIdentidad(p) + '</p>' +
+    '</div>';
 
   if (!p.activo) {
     html += '<div class="caja aviso"><h3>Paciente dado de baja</h3>' +
@@ -3686,31 +3837,20 @@ function pintarFicha(p) {
       'Sus turnos anteriores siguen en el sistema.</p></div>';
   }
 
-  // ---- identidad: lo que confirma que es la persona correcta ----
-  html += '<h2 class="titulo-bloque">Identidad</h2>' +
-    '<div class="ficha-datos">' +
-    tarjetaDato('Documento', p.documento, 'grande') +
-    tarjetaDato('Edad', p.edad === '' ? '' : p.edad + ' años', 'grande',
-                p.fecha_nacimiento ? 'nació el ' + fechaCorta(p.fecha_nacimiento) : '') +
-    tarjetaDato('Sexo', p.sexo) +
-    tarjetaDato('Obra social', p.obra_social) +
-    '</div>';
-
   // ---- contacto: para lo que de verdad se abre esta ventana ----
-  var tel = (p.telefono ? enlaceTel(p.telefono) : '') +
-            (p.telefono_alt ? '<span class="tel-alt">' + enlaceTel(p.telefono_alt) + '</span>' : '');
-  html += '<h2 class="titulo-bloque">Contacto</h2>' +
-    '<div class="ficha-datos">' +
-      tarjetaDato('Teléfono', tel, 'grande', '', true) +
-      tarjetaDato('Correo', p.email
-        ? '<a href="mailto:' + txt(p.email) + '">' + txt(p.email) + '</a>' : '', '', '', true) +
-    '</div>' +
-    '<div class="ficha-datos una">' +
-      tarjetaDato('Domicilio', p.domicilio ? enlaceMapa(p.domicilio) : '', '', '', true) +
+  html += '<div class="acciones-contacto">' +
+    botonContacto('&#128222;', 'Teléfono', p.telefono,
+                  p.telefono ? 'tel:' + soloDiscables(p.telefono) : '',
+                  p.telefono_alt) +
+    botonContacto('&#128205;', 'Domicilio', p.domicilio,
+                  p.domicilio ? urlMapa(p.domicilio) : '', '',
+                  'Buscarlo en Google Maps (se abre en una pestaña nueva)') +
+    botonContacto('&#9993;', 'Correo', p.email,
+                  p.email ? 'mailto:' + p.email : '') +
     '</div>';
 
   if (p.observaciones_adm) {
-    html += '<h2 class="titulo-bloque">Observaciones administrativas</h2>' +
+    html += '<p class="rotulo-grupo">Observaciones administrativas</p>' +
             '<div class="caja"><p>' + txt(p.observaciones_adm) + '</p>' +
             '<p class="ayuda">No es información clínica: este sistema no es una ' +
             'historia clínica.</p></div>';
@@ -3723,9 +3863,9 @@ function pintarFicha(p) {
   // el mostrador la pregunta casi siempre es "¿cuándo tiene el próximo?".
   // Sin la marca hay que comparar cada fecha con el calendario mentalmente.
   var hoy = S.sesion.hoy || hoyLocal();
+  html += '<p class="rotulo-grupo">Turnos</p>';
   if (p.ultimos_turnos && p.ultimos_turnos.length) {
-    html += '<h2 class="titulo-bloque">Turnos</h2>' +
-      '<div class="tabla-cont"><table><thead><tr><th>Fecha</th><th>Hora</th>' +
+    html += '<div class="tabla-cont"><table><thead><tr><th>Fecha</th><th>Hora</th>' +
       '<th>Profesional</th><th>Estado</th></tr></thead><tbody>' +
       p.ultimos_turnos.map(function (t) {
         var proximo = String(t.fecha) >= hoy &&
@@ -3742,12 +3882,11 @@ function pintarFicha(p) {
       '<p class="ayuda pie-tabla">Los diez más recientes. La historia completa está ' +
       'en la planilla.</p></div>';
   } else if (p.ultimos_turnos) {
-    html += '<h2 class="titulo-bloque">Turnos</h2>' +
-            '<div class="caja"><p>Sin turnos registrados.</p></div>';
+    html += '<div class="caja"><p>Sin turnos registrados.</p></div>';
   }
 
   abrirModal({
-    titulo: nombrePaciente(p),
+    titulo: 'Ficha del paciente',
     ancho: 680,
     cuerpo: html,
     textoAceptar: puede('paciente.editar') ? 'Editar' : null,
@@ -3756,23 +3895,59 @@ function pintarFicha(p) {
 }
 
 /**
- * Un dato de la ficha, con su rótulo arriba en chico y el valor abajo.
+ * Documento, edad, sexo y obra social en un renglón.
  *
- * @param crudo true si el valor ya es HTML armado acá (un enlace). Todo lo
- *              demás se escapa: un apellido con un < no puede romper nada.
+ * Se leen juntos, así que van juntos. Lo que falta no ocupa lugar: un
+ * paciente sin obra social simplemente no la muestra, en vez de reservarle
+ * una caja que dice "Sin dato".
  */
-function tarjetaDato(rotulo, valor, clase, pie, crudo) {
-  var vacio = (valor === null || valor === undefined || valor === '');
-  return '<div class="dato-tarjeta' + (clase ? ' ' + clase : '') + '">' +
-    '<span class="rot">' + txt(rotulo) + '</span>' +
-    '<span class="val' + (vacio ? ' vacio' : '') + '">' +
-      (vacio ? 'Sin dato' : (crudo ? valor : txt(String(valor)))) + '</span>' +
-    (pie && !vacio ? '<span class="pie">' + txt(pie) + '</span>' : '') +
-    '</div>';
+function lineaIdentidad(p) {
+  var partes = [];
+  partes.push('<span class="doc">' + txt(p.documento) + '</span>');
+  if (p.edad !== '' && p.edad !== undefined && p.edad !== null) {
+    // La fecha de nacimiento va en el globo de ayuda: se necesita para
+    // confrontar contra un carnet, pero no todos los días.
+    partes.push('<span' + (p.fecha_nacimiento
+        ? ' title="Nació el ' + txt(fechaCorta(p.fecha_nacimiento)) + '"' : '') + '>' +
+      txt(p.edad + ' años') + '</span>');
+  } else if (p.fecha_nacimiento) {
+    partes.push('<span>' + txt(fechaCorta(p.fecha_nacimiento)) + '</span>');
+  }
+  if (p.sexo) partes.push('<span>' + txt(p.sexo) + '</span>');
+  if (p.obra_social) partes.push('<span class="obra">' + txt(p.obra_social) + '</span>');
+  return partes.join('<span class="sep">·</span>');
 }
 
 /**
- * El domicilio, como enlace a Google Maps.
+ * Un dato de contacto, como algo que se toca.
+ *
+ * El que no tiene dato se dibuja igual, en punteado y sin enlace: así se ve
+ * de un vistazo QUÉ FALTA, que es la mitad de para lo que se abre una ficha
+ * cuando hay que avisarle a alguien que el profesional no viene.
+ */
+function botonContacto(icono, rotulo, valor, destino, secundario, ayuda) {
+  if (!valor) {
+    return '<span class="accion no"><span class="ico">' + icono + '</span>' +
+      '<span class="txt"><span class="k">' + txt(rotulo) + '</span>' +
+      '<span class="v">sin dato</span></span></span>';
+  }
+  return '<a class="accion" href="' + txt(destino) + '"' +
+    (destino.indexOf('http') === 0 ? ' target="_blank" rel="noopener"' : '') +
+    (ayuda ? ' title="' + txt(ayuda) + '"' : '') + '>' +
+    '<span class="ico">' + icono + '</span>' +
+    '<span class="txt"><span class="k">' + txt(rotulo) + '</span>' +
+    '<span class="v">' + txt(valor) + '</span>' +
+    (secundario ? '<span class="v2">' + txt(secundario) + '</span>' : '') +
+    '</span></a>';
+}
+
+/** Un teléfono, listo para marcar: sin espacios, guiones ni paréntesis. */
+function soloDiscables(numero) {
+  return String(numero).replace(/[^0-9+]/g, '');
+}
+
+/**
+ * El domicilio, en Google Maps.
  *
  * Se le agrega "Balcarce, Buenos Aires, Argentina": sin eso, "Calle 20 1234"
  * cae en cualquier ciudad del país y el enlace es peor que no tenerlo.
@@ -3781,16 +3956,9 @@ function tarjetaDato(rotulo, valor, clase, pie, crudo) {
  * precisión de GPS, y una búsqueda tolera "20 e/ 15 y 17" o un barrio suelto,
  * que es como se anotan las direcciones de verdad en un mostrador.
  */
-function enlaceMapa(domicilio) {
-  if (!domicilio) return '—';
-  var consulta = encodeURIComponent(domicilio + ', Balcarce, Buenos Aires, Argentina');
-  // El "abre en otra pestaña" iba abajo, en un renglón gris propio, y ocupaba
-  // tanto como el domicilio. Va como globo de ayuda y una flechita: se sigue
-  // avisando, sin que la advertencia pese más que el dato.
-  return '<a href="https://www.google.com/maps/search/?api=1&query=' + consulta + '" ' +
-         'target="_blank" rel="noopener" ' +
-         'title="Buscarlo en Google Maps (se abre en una pestaña nueva)">' +
-         txt(domicilio) + '<span class="afuera" aria-hidden="true">↗</span></a>';
+function urlMapa(domicilio) {
+  return 'https://www.google.com/maps/search/?api=1&query=' +
+         encodeURIComponent(domicilio + ', Balcarce, Buenos Aires, Argentina');
 }
 
 // ---------------------------------------------------------------- editar
@@ -5056,16 +5224,20 @@ function pintarUsuarios(cont) {
         '<span class="der"><button class="btn principal chico" id="usr-nuevo">Agregar usuario</button></span></h2>' +
         '<div class="caja"><p>Un usuario puede tener <b>varios roles a la vez</b>. Los permisos ' +
         'se suman: quien es Profesional y Administrador ve todas las agendas, y además tiene la ' +
-        'suya en la pantalla de inicio.</p></div>' +
+        'suya en la pantalla de inicio.</p>' +
+        '<p>Se entra con <b>usuario y contraseña</b> o con <b>cuenta de Google</b>. ' +
+        'Quien tenga permisos para administrar el sistema —dar de alta usuarios o editar ' +
+        'roles— <b>necesita Google</b>: esa cuenta reparte permisos y ve el padrón entero, ' +
+        'y Google le da verificación en dos pasos.</p></div>' +
         '<div class="tabla-cont"><table class="usuarios"><thead><tr>' +
-        '<th>Correo</th><th>Nombre</th>' +
+        '<th>Entra con</th><th>Nombre</th>' +
         r.roles_disponibles.map(function (rol) {
           return '<th class="rol-col">' + txt(nombreRol(rol)) + '</th>';
         }).join('') +
         '<th>Profesional Asociado</th><th>Activo</th><th></th></tr></thead><tbody>' +
         us.map(function (u) {
           return '<tr' + (u.activo ? '' : ' class="inactiva"') + '>' +
-            '<td class="num">' + txt(u.email) + '</td>' +
+            '<td>' + comoEntra(u) + '</td>' +
             '<td>' + txt(((u.nombre || '') + ' ' + (u.apellido || '')).trim()) + '</td>' +
             r.roles_disponibles.map(function (rol) {
               return '<td class="rol-col">' +
@@ -5076,15 +5248,28 @@ function pintarUsuarios(cont) {
             '<td>' + txt(u.medico_id ? nombreMedico(u.medico_id) : '') + '</td>' +
             '<td><span class="pill ' + (u.activo ? 'si' : 'no') + '">' +
               (u.activo ? 'Sí' : 'No') + '</span></td>' +
-            '<td class="acciones"><button class="btn chico" data-id="' + txt(u.id) + '">Editar</button></td>' +
-          '</tr>';
+            '<td class="acciones"><button class="btn chico" data-id="' + txt(u.id) + '">Editar</button>' +
+              (u.usuario
+                ? ' <button class="btn chico" data-clave="' + txt(u.id) + '">Contraseña</button>' : '') +
+              (u.bloqueado
+                ? ' <button class="btn chico peligro" data-desbloq="' + txt(u.id) +
+                  '">Desbloquear</button>' : '') +
+            '</td></tr>';
         }).join('') + '</tbody></table></div></section>';
 
     $('usr-nuevo').addEventListener('click', function () { formUsuario(null, r.roles_disponibles); });
-    $$('#cfg-cuerpo td.acciones button').forEach(function (b) {
+    $$('#cfg-cuerpo button[data-id]').forEach(function (b) {
       b.addEventListener('click', function () {
         formUsuario(us.filter(function (u) { return u.id === b.dataset.id; })[0], r.roles_disponibles);
       });
+    });
+    $$('#cfg-cuerpo button[data-clave]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        formReponerClave(us.filter(function (u) { return u.id === b.dataset.clave; })[0]);
+      });
+    });
+    $$('#cfg-cuerpo button[data-desbloq]').forEach(function (b) {
+      b.addEventListener('click', function () { desbloquearUsuario(b.dataset.desbloq); });
     });
   }).catch(function (err) {
     if (!vigente(gen)) return;
@@ -5092,14 +5277,77 @@ function pintarUsuarios(cont) {
   });
 }
 
+/** Con qué puede entrar esta persona. Las dos cosas si tiene las dos. */
+function comoEntra(u) {
+  var partes = [];
+  if (u.usuario) {
+    partes.push('<div class="num">' + txt(u.usuario) +
+      (u.debe_cambiar ? ' <span class="pill prop">provisoria</span>' : '') +
+      (u.bloqueado ? ' <span class="pill no">bloqueado</span>' : '') + '</div>');
+  }
+  if (u.email) partes.push('<div class="num faint">' + txt(u.email) + '</div>');
+  return partes.join('') || '<span class="pill no">sin acceso</span>';
+}
+
+function formReponerClave(u) {
+  if (!u) return;
+  var idem = nuevaIdem();
+  abrirModal({
+    titulo: 'Contraseña de ' + (((u.nombre || '') + ' ' + (u.apellido || '')).trim() || u.usuario),
+    ancho: 460,
+    cuerpo:
+      '<div class="caja aviso"><p>Vas a conocer esta contraseña, así que el sistema le ' +
+      'va a pedir a la persona que la cambie apenas entre. Decísela en persona o por ' +
+      'teléfono; <b>no la mandes por correo ni por WhatsApp</b>.</p></div>' +
+      '<div class="campo"><label for="rc-clave">Contraseña provisoria</label>' +
+        '<input type="text" id="rc-clave" autocomplete="off">' +
+        '<div class="ayuda">Al menos 8 caracteres. Va en texto visible a propósito: ' +
+        'la tenés que poder leer para dictarla.</div></div>',
+    textoAceptar: 'Poner la contraseña',
+    alAceptar: function () {
+      return llamar('config.clave.reponer', {
+        idem: idem, usuario_id: u.id, clave_nueva: valorModal('rc-clave')
+      }).then(function () {
+        avisar('Contraseña puesta. La persona la va a cambiar al entrar.');
+        olvidarCache('config.usuarios.listar');
+        recargarConfig();
+      });
+    }
+  });
+}
+
+function desbloquearUsuario(id) {
+  llamar('config.usuario.desbloquear', { idem: nuevaIdem(), usuario_id: id })
+    .then(function () {
+      avisar('Desbloqueado');
+      olvidarCache('config.usuarios.listar');
+      recargarConfig();
+    })
+    .catch(function (err) { mostrarError(err, null); });
+}
+
 function formUsuario(u, roles) {
   var cuerpo =
-    '<div class="campo"><label for="f-email">Correo de Google</label>' +
-      '<input type="email" id="f-email" style="width:100%" value="' + txt(u ? u.email : '') + '"' +
-      (u ? ' readonly' : '') + '>' +
-      (u ? '' : '<div class="ayuda">Tiene que ser la cuenta con la que la persona va a entrar. ' +
-                'Cualquier cuenta de Google sirve.</div>') +
+    '<div class="caja"><p>Elegí con qué va a entrar. Puede ser una cosa, la otra, o las dos.</p>' +
+    '<p class="ayuda">Quien administre el sistema necesita correo de Google: el sistema ' +
+    'lo exige y no se puede saltear desde acá.</p></div>' +
+    '<div class="fila">' +
+      '<div class="campo"><label for="f-usuario">Nombre de usuario</label>' +
+        '<input type="text" id="f-usuario" style="width:100%" autocapitalize="off" ' +
+        'autocorrect="off" spellcheck="false" value="' + txt(u ? (u.usuario || '') : '') + '">' +
+        '<div class="ayuda">Sin espacios ni acentos. Por ejemplo <code>rita.paz</code>.</div></div>' +
+      '<div class="campo"><label for="f-email">Correo de Google</label>' +
+        '<input type="email" id="f-email" style="width:100%" value="' +
+        txt(u ? (u.email || '') : '') + '">' +
+        '<div class="ayuda">Cualquier cuenta de Google sirve.</div></div>' +
     '</div>' +
+    (u && u.usuario
+      ? '<div class="ayuda" style="margin:-6px 0 12px">Para cambiarle la contraseña usá el ' +
+        'botón <b>Contraseña</b> de la lista.</div>'
+      : '<div class="campo"><label for="f-clave">Contraseña inicial</label>' +
+        '<input type="text" id="f-clave" style="width:100%" autocomplete="off">' +
+        '<div class="ayuda">Solo si le ponés nombre de usuario. La persona la va a tener ' +
+        'que cambiar la primera vez que entre.</div></div>') +
     '<div class="fila">' +
       '<div class="campo"><label for="f-nombre">Nombre</label>' +
         '<input type="text" id="f-nombre" style="width:100%" value="' + txt(u ? u.nombre : '') + '"></div>' +
@@ -5138,7 +5386,9 @@ function formUsuario(u, roles) {
                                .map(function (c) { return c.value; });
       var datos = {
         idem: idem,
+        usuario_id: u ? u.id : undefined,
         email: valorModal('f-email'),
+        usuario: valorModal('f-usuario'),
         nombre: valorModal('f-nombre'),
         apellido: valorModal('f-apellido'),
         roles: elegidos,
@@ -5146,6 +5396,12 @@ function formUsuario(u, roles) {
         activo: valorModal('f-activo'),
         version: u ? u.version : undefined
       };
+      // La contraseña inicial viaja solo en el alta, y solo si hay usuario.
+      if ($('f-clave')) datos.clave = valorModal('f-clave');
+      if (!datos.email && !datos.usuario) {
+        throw { codigo: 'SIN_FORMA_DE_ENTRAR',
+                mensaje: 'Poné un correo de Google, un nombre de usuario, o los dos.' };
+      }
 
       guardarSinEsperar({
         accion: 'config.usuarios.guardar', datos: datos,
@@ -5154,7 +5410,11 @@ function formUsuario(u, roles) {
           return aplicarLocal('config.usuarios.listar', {}, function (l) {
             ponerEnLista(l.usuarios, {
               id: u ? u.id : 'nuevo-' + idem,
-              email: datos.email, nombre: datos.nombre, apellido: datos.apellido,
+              email: datos.email, usuario: datos.usuario,
+              tiene_clave: !!datos.clave || (u ? u.tiene_clave : false),
+              debe_cambiar: !!datos.clave,
+              bloqueado: false,
+              nombre: datos.nombre, apellido: datos.apellido,
               roles: elegidos, medico_id: datos.medico_id,
               activo: datos.activo === true,
               ultimo_acceso: u ? u.ultimo_acceso : '',
@@ -6044,6 +6304,10 @@ function iniciar() {
     }
     precargarEnSegundoPlano();
     arrancarBloqueo();
+    // Una contraseña que puso un administrador la sabe el administrador: no
+    // puede quedar como la definitiva de nadie. Se pide cambiarla apenas
+    // entra, y el diálogo no se cierra hasta que lo hace.
+    if (s.usuario && s.usuario.debe_cambiar) pedirCambioDeClave();
   }).catch(function (err) {
     A.esperandoSesion = false;
     // Credencial vencida no es un error: se renueva sola y se vuelve a
@@ -6101,6 +6365,11 @@ function aplicarSesion(s, provisoria) {
 
   // La marca de version solo se compara con la de verdad: una foto vieja
   // diria que los proyectos estan desincronizados cuando no lo estan.
+  // El botón de contraseña solo para quien tiene una. A quien entra con
+  // Google no se le ofrece: su contraseña la maneja Google, no este sistema.
+  if (s.usuario && s.usuario.con_clave) $('mi-clave').classList.remove('oculto');
+  else $('mi-clave').classList.add('oculto');
+
   if (!provisoria) mostrarBuild(s.build);
   marcarProvisoria(provisoria);
 
@@ -6201,7 +6470,52 @@ function irA(clave, forzar) {
   VISTAS[clave].montar($('vista'));
 }
 
+/**
+ * Cambiar la propia contraseña.
+ *
+ * Se abre solo cuando es obligatorio —contraseña puesta por un
+ * administrador— y también desde el botón de la cabecera. Pide la actual: sin
+ * eso, una pantalla que quedó abierta en el mostrador alcanza para quedarse
+ * con el usuario de otro.
+ */
+function pedirCambioDeClave(opcional) {
+  abrirModal({
+    titulo: opcional ? 'Cambiar mi contraseña' : 'Poné tu propia contraseña',
+    ancho: 460,
+    cerrable: opcional ? true : false,
+    cuerpo:
+      (opcional ? '' :
+        '<div class="caja aviso"><p>Estás entrando con una contraseña que puso un ' +
+        'administrador, así que él la conoce. Poné una tuya para seguir.</p></div>') +
+      '<div class="campo"><label for="cl-actual">Contraseña actual</label>' +
+        '<input type="password" id="cl-actual" autocomplete="current-password"></div>' +
+      '<div class="campo"><label for="cl-nueva">Contraseña nueva</label>' +
+        '<input type="password" id="cl-nueva" autocomplete="new-password">' +
+        '<div class="ayuda">Al menos 8 caracteres. No la anotes en un papel pegado ' +
+        'al monitor: si no te la vas a acordar, mejor una frase larga y fácil ' +
+        'para vos.</div></div>' +
+      '<div class="campo"><label for="cl-repetir">Repetila</label>' +
+        '<input type="password" id="cl-repetir" autocomplete="new-password"></div>',
+    textoAceptar: 'Cambiar',
+    alAceptar: function () {
+      var nueva = valorModal('cl-nueva');
+      if (nueva !== valorModal('cl-repetir')) {
+        throw { codigo: 'NO_COINCIDEN', mensaje: 'Las dos contraseñas nuevas no coinciden.' };
+      }
+      return llamar('acceso.clave.cambiar', {
+        idem: nuevaIdem(),
+        clave_actual: valorModal('cl-actual'),
+        clave_nueva: nueva
+      }).then(function () {
+        avisar('Contraseña cambiada');
+        if (S.sesion && S.sesion.usuario) S.sesion.usuario.debe_cambiar = false;
+      });
+    }
+  });
+}
+
 $('salir').addEventListener('click', salirDelSistema);
+$('mi-clave').addEventListener('click', function () { pedirCambioDeClave(true); });
 $('cuenta').addEventListener('click', cambiarDeCuenta);
 
 arrancar();
