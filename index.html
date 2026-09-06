@@ -242,12 +242,63 @@
   /* El rotulo es TEXTO, no un boton: los botones no se imprimen, y por eso
      antes el papel salia con columnas sin nombre de dia ni de medico. */
   h4.rotulo{border-bottom:1px solid var(--rule);padding-bottom:4px;}
+  /* ================================================================
+     EL DIA, EN LA CABECERA DE CADA COLUMNA DE LA SEMANA
+
+     El numero grande y el nombre del dia debajo. La semana se recorre
+     buscando "el martes" o "el 9", no leyendo siete renglones del mismo
+     tamano. Y HOY se dice con una palabra ademas del borde de color: con
+     siete columnas, un borde se pierde. */
+  .dia-semana h4.rotulo{display:flex;align-items:baseline;gap:7px;}
+  .dia-semana .dia-num{font-family:var(--mono);font-size:21px;font-weight:700;
+                       line-height:1;color:var(--ink);
+                       font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
+  .dia-semana .dia-nom{font-size:12px;font-weight:600;color:var(--muted);}
+  .dia-semana.hoy .dia-num{color:var(--acento);}
+  .pill.hoy{margin-left:auto;background:var(--acento);color:var(--sobre-acento);
+            font-weight:700;letter-spacing:.04em;}
+  .dia-semana.cerrado .dia-num{color:var(--faint);}
+  /* La cabecera de columna del tablero se queda a la vista mientras se
+     recorre un dia largo: una lista de veinte turnos sin saber de quien es
+     obliga a subir cada vez. */
+  .col-medico h4.rotulo{position:sticky;top:0;z-index:1;background:var(--surface);}
   h4.rotulo small{display:block;font-weight:400;font-size:11px;color:var(--muted);}
   h4.rotulo.clicable{cursor:pointer;}
   h4.rotulo.clicable:hover{color:var(--acento);}
   h4.rotulo.clicable:focus-visible{outline:2px solid var(--acento);outline-offset:2px;}
   .cuenta.alerta{color:var(--alerta) !important;font-weight:600;}
   .pie-semana{margin-top:10px;font-size:12px;color:var(--muted);}
+
+  /* ================================================================
+     LOS INTERRUPTORES DE PROFESIONAL DEL TABLERO
+
+     Con diez profesionales el tablero son diez columnas angostas y recepcion
+     mira tres. Apagar el resto es lo que hace usable la pantalla.
+
+     Ocultar turnos es delicado, asi que el apagado se VE: el boton se queda
+     en su lugar, tachado y en gris, con la cantidad de turnos al lado. Nunca
+     desaparece nadie de la lista de botones; lo unico que desaparece es su
+     columna, y arriba dice cuantos hay apagados.
+     ================================================================ */
+  .filtro-medicos{display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+                  margin-bottom:12px;padding-bottom:10px;
+                  border-bottom:1px solid var(--rule);}
+  .filtro-medicos .rot{font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+                       color:var(--muted);font-weight:600;margin-right:2px;}
+  .chip{display:inline-flex;align-items:center;gap:6px;
+        background:var(--acento-suave);border:1px solid var(--acento);
+        color:var(--acento-ink);border-radius:14px;padding:4px 10px;
+        min-height:28px;font-size:12.5px;font-weight:560;cursor:pointer;
+        white-space:nowrap;}
+  .chip .n{font-family:var(--mono);font-size:11px;font-weight:600;opacity:.75;
+           font-variant-numeric:tabular-nums;}
+  .chip:hover{border-color:var(--acento-ink);}
+  .chip:focus-visible{outline:2px solid var(--acento);outline-offset:2px;}
+  .chip.apagado{background:var(--surface-2);border-color:var(--rule-fuerte);
+                color:var(--faint);text-decoration:line-through;font-weight:400;}
+  .chip.apagado .n{text-decoration:none;}
+  .filtro-medicos .aviso-oculto{font-size:12px;color:var(--aviso);font-weight:600;
+                                margin-left:auto;}
   /* Ficha del paciente: rotulo a la izquierda, dato a la derecha. */
   td.rotulo-dato{color:var(--muted);font-size:13px;width:34%;white-space:nowrap;}
   td.dato .ayuda{display:block;font-size:11.5px;color:var(--faint);}
@@ -293,7 +344,19 @@
                                       font-style:normal;}
   .col-medico li.libre.clicable:focus-visible{outline:2px solid var(--acento);outline-offset:-2px;}
   .col-medico li.sobre{background:var(--aviso-suave);}
+  .dia-semana li.sobre .h{color:var(--aviso);font-weight:700;}
   .dia-semana li .h,.col-medico li .h{font-family:var(--mono);color:var(--muted);}
+  /* El estado, tambien en las listas compactas: lo cancelado tachado y lo
+     atendido apagado, igual que en la franja de la vista de dia. Sin esto una
+     columna de cancelados se lee igual de ocupada que una de pacientes por
+     atender, que es justo la lectura que no puede fallar. */
+  .dia-semana li.est-ATENDIDO,.col-medico li.est-ATENDIDO{color:var(--muted);}
+  .dia-semana li.est-CANCELADO,.col-medico li.est-CANCELADO,
+  .dia-semana li.est-REPROGRAMADO,.col-medico li.est-REPROGRAMADO{
+    color:var(--faint);text-decoration:line-through;}
+  .dia-semana li.est-AUSENTE .h,.col-medico li.est-AUSENTE .h{color:var(--aviso);}
+  .col-medico li.clicable{cursor:pointer;}
+  .col-medico li.clicable:focus-visible{outline:2px solid var(--acento);outline-offset:-2px;}
   /* El tablero necesita más ancho que una agenda de un solo profesional. Si el
      navegador no entiende :has(), queda en el ancho normal y se sigue viendo
      bien: es más angosto, no roto. */
@@ -333,6 +396,57 @@
   tbody tr.inactiva{opacity:.5;}
   td.acciones{text-align:right;white-space:nowrap;}
   td.num{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12.5px;}
+  /* ================================================================
+     LISTADOS LARGOS: SCROLL PROPIO Y ENCABEZADO FIJO
+
+     El padron se recorre con la vista, no con la barra del navegador. Con
+     scroll propio la barra de busqueda y el paginado quedan siempre a la
+     vista, y el encabezado pegado arriba evita la pregunta de siempre:
+     "¿esta columna cual era?" a los treinta renglones.
+     ================================================================ */
+  .tabla-scroll{max-height:62vh;overflow:auto;}
+  .tabla-scroll thead th{position:sticky;top:0;z-index:2;}
+  td .tel-alt{display:block;color:var(--muted);font-size:11.5px;}
+  /* El paginado: cuantos se ven, cuales se ven y como pasar de pagina. */
+  .paginado{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+            margin-bottom:10px;font-size:13px;}
+  .paginado select{min-height:32px;padding:4px 8px;}
+  .paginado .rango{font-family:var(--mono);font-size:12px;color:var(--muted);
+                   font-variant-numeric:tabular-nums;}
+  .paginado .nav-fechas{margin-left:auto;}
+  .paginado #pac-pag{font-family:var(--mono);font-variant-numeric:tabular-nums;
+                     opacity:1;cursor:default;min-width:64px;}
+
+  /* ================================================================
+     LA FICHA DEL PACIENTE
+
+     Se abre con el telefono en la mano o con la persona enfrente. Antes era
+     una lista de once renglones donde el documento y el correo pesaban lo
+     mismo; ahora los datos que identifican a la persona van en tarjetas que
+     se leen de un vistazo, y el contacto abajo, aparte.
+     ================================================================ */
+  .titulo-bloque{font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+                 color:var(--muted);font-weight:600;margin:18px 0 8px;}
+  .ficha-datos{display:grid;gap:10px;margin-bottom:4px;
+               grid-template-columns:repeat(auto-fit,minmax(150px,1fr));}
+  .ficha-datos.una{grid-template-columns:1fr;}
+  .dato-tarjeta{border:1px solid var(--rule);border-radius:5px;padding:8px 11px;
+                background:var(--surface-2);min-width:0;}
+  .dato-tarjeta .rot{display:block;font-size:11px;letter-spacing:.05em;
+                     text-transform:uppercase;color:var(--muted);font-weight:600;}
+  .dato-tarjeta .val{display:block;margin-top:3px;font-size:15px;font-weight:560;
+                     overflow-wrap:anywhere;}
+  .dato-tarjeta.grande .val{font-family:var(--mono);font-size:17px;font-weight:600;
+                            font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+  .dato-tarjeta .val.vacio{color:var(--faint);font-style:italic;font-weight:400;
+                           font-size:14px;font-family:inherit;letter-spacing:0;}
+  .dato-tarjeta .pie{display:block;margin-top:2px;font-size:11.5px;color:var(--faint);}
+  .dato-tarjeta .val .tel-alt{display:block;font-size:14px;color:var(--muted);margin-top:2px;}
+  .dato-tarjeta .val .ayuda{display:block;font-size:11.5px;color:var(--faint);
+                            font-weight:400;font-family:inherit;letter-spacing:0;}
+  /* Los turnos pasados de la ficha, con el mismo codigo que la agenda. */
+  tbody tr.est-CANCELADO td,tbody tr.est-REPROGRAMADO td{color:var(--faint);}
+  tbody tr.est-ATENDIDO td{color:var(--muted);}
 
   /* ---------------- avisos ---------------- */
   .caja{padding:12px 14px;border-left:3px solid var(--rule-fuerte);margin-bottom:14px;
@@ -400,14 +514,30 @@
     table{width:100%;border-collapse:collapse;}
     th,td{border:1px solid #bbb;padding:3pt 5pt;font-size:9.5pt;}
     thead{display:table-header-group;}          /* el encabezado se repite */
+    /* En papel no hay scroll: la lista se imprime entera, no la altura de la
+       pantalla. Y el encabezado pegado se vuelve encabezado repetido. */
+    .tabla-scroll{max-height:none;overflow:visible;}
+    .tabla-scroll thead th{position:static;}
+    .dato-tarjeta{border:1px solid #bbb;background:#fff;}
     tr,.franja,.dia-semana,.col-medico{break-inside:avoid;}
     .grilla{border:1px solid #999;}
     .franja{border-bottom:1px solid #ddd;}
     .semana,.tablero{display:block;}
     .dia-semana,.col-medico{border:1px solid #999;margin-bottom:8pt;}
     /* Que en el papel se sepa de que dia y de que medico es cada bloque. */
-    h4.rotulo{font-size:11pt;border-bottom:1px solid #999;padding-bottom:2pt;color:#000;}
+    h4.rotulo{font-size:11pt;border-bottom:1px solid #999;padding-bottom:2pt;color:#000;
+              position:static;}
     h4.rotulo small{color:#333;}
+    .dia-semana .dia-num{font-size:13pt;color:#000;}
+    .dia-semana .dia-nom{font-size:10pt;color:#000;}
+    /* En el papel la fecha grande sigue siendo el dato que ubica la hoja, pero
+       en tinta negra: un titulo celeste en una impresora laser sale gris. */
+    .fecha-grande{color:#000;font-size:15pt;}
+    .encabezado.dia h1{font-size:12pt;}
+    /* Ni HOY ni las barras de color: en el papel no hay "hoy", hay la fecha
+       que dice el titulo, y una barra de seis pixeles no sobrevive la tinta. */
+    .pill.hoy,.medidor{display:none !important;}
+    .completo{color:#000;}
     .pie-semana{color:#000;font-size:9pt;}
     a[href]::after{content:"";}                  /* sin URLs pegadas al texto */
     .pie-impresion{display:block !important;margin-top:10pt;padding-top:6pt;
@@ -524,9 +654,10 @@
   <div class="yo oculto" id="yo">
     <span class="quien-soy" id="yo-nombre"></span>
     <select id="ver-como" class="oculto" aria-label="Ver como"></select>
+    <!-- Lo único que queda acá es si hay algo viajando al servidor: no es un
+         número, es saber si lo que se acaba de tocar ya se guardó. Los tiempos
+         y la versión se fueron a Configuración › Velocidad. -->
     <span class="build" id="pendientes" title="Operaciones en camino al servidor"></span>
-    <span class="build" id="tiempos" title="Cuánto tardó el último pedido"></span>
-    <span class="build" id="build" title="Versión desplegada"></span>
     <button class="btn chico sin-imprimir" id="cuenta"
             title="Entrar con otra de las cuentas de Google abiertas">Cuenta</button>
     <button class="btn chico sin-imprimir" id="salir" title="Cerrar la pantalla">Salir</button>
@@ -539,7 +670,7 @@
 // transporte_web.html.
 var CLIENT_ID    = "873472275504-qia4rjcejadpagkgam7urn0bahq0n7ur.apps.googleusercontent.com";
 var URL_NUCLEO   = "https://script.google.com/macros/s/AKfycby-OWNY3iXvC4ssuWxHb_jogLtNbUtNlPX8bGY3IMu571aKJPFxKWoHUpE-0x4xy_kb/exec";
-var BUILD_PORTAL = "2026-09-06 10:34";
+var BUILD_PORTAL = "2026-09-06 10:51";
 var URL_PORTAL   = "";   // no aplica: esta pantalla no vive en Apps Script
 </script>
 
@@ -1379,6 +1510,10 @@ var A = { medicoId: null, fecha: null, huella: null, grillas: {}, sellos: {},
           // 'dia' | 'semana' | 'tablero'. Recepción arranca en tablero: lo que
           // mira al llegar es el día entero del centro, no un profesional.
           modo: null,
+          // Profesionales apagados en el tablero, por id. Es SOLO de esta
+          // pantalla y de esta sesión: no se guarda, no viaja al servidor y al
+          // recargar vuelven todos. Ver filtroProfesionales().
+          ocultos: {},
           // Mientras la pantalla se dibujó de memoria, la agenda todavía no
           // llegó: la trae sesion.iniciar y no hay que pedirla aparte.
           esperandoSesion: false };
@@ -1515,7 +1650,6 @@ function montarAgenda(cont) {
           'title="Urgencia fuera de agenda">Sobreturno</button>'
         : '') +
       botonesSalida('ag') +
-      '<span class="sello" id="ag-sello"></span>' +
     '</div>' +
     '<main><div id="ag-avisos"></div><div id="ag-cuerpo">' +
       '<div class="cargando">Cargando agenda…</div></div></main>';
@@ -1583,13 +1717,17 @@ function precargarTablero() {
     .catch(function () { /* es una comodidad: si falla, se pide cuando haga falta */ });
 }
 
-function sellarAgenda() {
-  var h = new Date();
-  if ($('ag-sello')) {
-    $('ag-sello').textContent = 'act. ' + ('0'+h.getHours()).slice(-2) + ':' +
-                                          ('0'+h.getMinutes()).slice(-2);
-  }
-}
+// ================================================================
+//  Acá había un "act. 20:58": la hora del último refresco, arriba a la
+//  derecha de la barra. Se sacó a pedido.
+//
+//  Que se pueda sacar sin perder nada tiene un motivo: la agenda se
+//  revalida sola cada 30 segundos y al volver a la pestaña, así que la
+//  hora que mostraba era, siempre, hace menos de medio minuto. Era un
+//  dato que no cambiaba ninguna decisión y que además invitaba a la
+//  pregunta equivocada —"¿estará vieja?"— cuando la respuesta es que no
+//  puede estarlo.
+// ================================================================
 
 /** Reparte según el modo. Los tres comparten barra, fecha y refresco. */
 function cargarAgenda(silencioso) {
@@ -1626,7 +1764,7 @@ function cargarDia(silencioso) {
     // aparecer un segundo despues.
     $('ag-avisos').innerHTML = '';
     pintarAgenda(guardada, false);
-    sellarAgenda();
+    // (ya no hay sello de hora)
     if (!fresca) refrescarDia(true);
     // Y se traen por detras los dias de mas adelante, para que seguir
     // avanzando por el calendario tampoco pida nada.
@@ -1644,7 +1782,7 @@ function cargarDia(silencioso) {
       if (!g) { refrescarDia(false); return; }
       $('ag-avisos').innerHTML = '';
       pintarAgenda(g, false);
-      sellarAgenda();
+      // (ya no hay sello de hora)
     })
     .catch(function (err) {
       // Si mientras tanto se cambió de profesional, de fecha o de pantalla, este
@@ -1668,7 +1806,7 @@ function refrescarDia(silencioso) {
       if (S.vista !== 'agenda' || A.medicoId !== medicoId || A.fecha !== fecha) return;
       $('ag-avisos').innerHTML = '';
       pintarAgenda(g, true);
-      sellarAgenda();
+      // (ya no hay sello de hora)
     })
     .catch(function (err) {
       if (silencioso) return;
@@ -1973,15 +2111,27 @@ function exportarSemana() {
 
 function exportarTablero() {
   var filas = [];
+  // Se exporta lo que se está viendo, no lo que hay: si se apagó a alguien en
+  // el tablero, tampoco sale en la planilla. La regla de esta sección es que
+  // el papel y el archivo sean exactamente la pantalla, sin sorpresas en
+  // ninguna de las dos direcciones.
+  var ocultos = 0;
   S.sesion.catalogos.medicos.forEach(function (m) {
     var g = A.grillas[claveAgenda(m.id, A.fecha)];
     if (!g) return;
+    if (!visibleEnTablero(m.id)) {
+      if (g.franjas.length || g.sobreturnos.length) ocultos++;
+      return;
+    }
     g.franjas.forEach(function (f) { if (!f.libre) filas.push(filaDeTurno(f.turno, m.id)); });
     g.sobreturnos.forEach(function (t) { filas.push(filaDeTurno(t, m.id)); });
   });
   exportarAHojaDeCalculo({
     accion: 'exportar.agenda', origen: 'agenda.tablero',
-    titulo: tituloAgenda(), subtitulo: fechaLarga(A.fecha),
+    titulo: tituloAgenda(),
+    subtitulo: fechaLarga(A.fecha) +
+      (ocultos ? ' · sin ' + ocultos + ' profesional' + (ocultos === 1 ? '' : 'es') +
+                 ' oculto' + (ocultos === 1 ? '' : 's') + ' en el tablero' : ''),
     columnas: COLUMNAS_TURNO, filas: filas
   });
 }
@@ -2010,6 +2160,21 @@ function barraOcupacion(ocupadas, total, pct) {
          '<span class="medidor ' + q + '"><i style="width:' + lleno + '%"></i></span>' +
          (pct >= 100 ? '<span class="completo">COMPLETO</span>' : pct + ' %') +
          '</div>';
+}
+
+/**
+ * Un turno en las listas compactas de la semana.
+ *
+ * Lleva la clase del estado, igual que la franja de la vista de día: lo
+ * cancelado se tacha y lo atendido se apaga. Sin eso una columna con tres
+ * cancelados se lee como tres pacientes por atender, que es exactamente el
+ * error que la vista de semana tiene que evitar.
+ */
+function itemTurno(t) {
+  return '<li class="' + (t.es_sobreturno ? 'sobre' : '') + claseEstado(t.estado) + '">' +
+         '<span class="h">' + (t.es_sobreturno ? '+' : '') + txt(t.hora) + '</span> ' +
+         txt(t.paciente ? (t.paciente.apellido + ', ' + t.paciente.nombre) : 'paciente') +
+         '</li>';
 }
 
 /** El estado se codifica en texto ademas de color: distinguirlo solo por
@@ -2054,12 +2219,38 @@ function cargarSemana(silencioso) {
     });
 }
 
+/**
+ * El título de una semana, escrito como se dice.
+ *
+ * "Del 7 al 13 de septiembre" si no cambia de mes, y "Del 28 de septiembre al
+ * 4 de octubre" si cambia. Dos fechas en 07/09/2026 obligan a leer números;
+ * así se lee de un vistazo, que es todo el punto de que esté en grande.
+ */
+function rangoSemana(lunes) {
+  var d = sumarDias(lunes, 6);
+  var mesL = MESES[Number(lunes.substring(5, 7)) - 1];
+  var mesD = MESES[Number(d.substring(5, 7)) - 1];
+  var diaL = String(Number(lunes.substring(8, 10)));
+  var diaD = String(Number(d.substring(8, 10)));
+  return (mesL === mesD)
+    ? 'Del ' + diaL + ' al ' + diaD + ' de ' + mesD
+    : 'Del ' + diaL + ' de ' + mesL + ' al ' + diaD + ' de ' + mesD;
+}
+
 function pintarSemana(medicoId, lunes) {
   var medico = medicoDe(medicoId) || {};
-  var html = '<div class="encabezado">' +
-    '<h1>' + txt(medico.apellido ? (medico.apellido + ', ' + medico.nombre) : 'Agenda') + '</h1>' +
-    '<div class="subtitulo">Semana del ' + txt(fechaCorta(lunes)) + ' al ' +
-      txt(fechaCorta(sumarDias(lunes, 6))) + '</div></div>';
+  var esp = nombreDe(S.sesion.catalogos.especialidades, medico.especialidad_id);
+
+  // Misma jerarquía que la vista de día: primero CUÁNDO, después de quién.
+  // Cambiar de semana es el error caro de esta pantalla, igual que en el día
+  // lo es cambiar de fecha, así que el rango va grande y en el acento.
+  var html = '<div class="encabezado dia">' +
+    '<div class="ubica">' +
+      '<p class="fecha-grande">' + txt(rangoSemana(lunes)) + '</p>' +
+      '<h1>' + txt(medico.apellido ? (medico.apellido + ', ' + medico.nombre) : 'Agenda') + '</h1>' +
+      '<div class="subtitulo">' + (esp ? txt(esp) + ' · ' : '') +
+        txt(lunes.substring(0, 4)) + '</div>' +
+    '</div></div>';
 
   html += '<div class="semana">';
   var ocultos = [];
@@ -2098,34 +2289,38 @@ function pintarSemana(medicoId, lunes) {
     // El rótulo va como TEXTO, no adentro del botón: la hoja de estilos de
     // impresión esconde los botones, y por eso en el papel las columnas
     // salían sin nombre ni número de día.
+    // El número de día en grande y el nombre abajo: la semana se recorre
+    // buscando "el martes", no leyendo siete renglones iguales. Y el día de
+    // hoy se dice con una palabra además del borde de color, porque un borde
+    // se pierde cuando la pantalla tiene siete columnas.
     html += '<div class="dia-semana' + (esHoy ? ' hoy' : '') +
       (cerrado ? ' cerrado' : '') + '">' +
       '<h4 class="rotulo clicable" data-dia="' + txt(f) + '" tabindex="0" role="button" ' +
         'title="Ver el día completo">' +
-        txt(DIAS_SEMANA[i + 1] + ' ' + f.substring(8, 10)) + '</h4>';
+        '<span class="dia-num">' + txt(String(Number(f.substring(8, 10)))) + '</span>' +
+        '<span class="dia-nom">' + txt(DIAS_SEMANA[i + 1]) + '</span>' +
+        (esHoy ? '<span class="pill hoy">HOY</span>' : '') + '</h4>';
 
     if (cerrado) {
       html += '<div class="vacio-msg">' + txt(cerrado.motivo) + '</div>';
       if (sueltos.length) {
         html += '<div class="cuenta alerta">' + sueltos.length +
                 ' turno(s) a reprogramar</div>' +
-                '<ul>' + sueltos.map(function (t) {
-                  return '<li><span class="h">' + txt(t.hora) + '</span> ' +
-                         txt(t.paciente ? (t.paciente.apellido + ', ' + t.paciente.nombre)
-                                        : 'paciente') + '</li>';
-                }).join('') + '</ul>';
+                '<ul>' + sueltos.map(itemTurno).join('') + '</ul>';
       }
     } else if (!atiende) {
       html += '<div class="vacio-msg">No atiende</div>';
     } else {
-      html += '<div class="cuenta">' + g.resumen.ocupadas + ' de ' + g.resumen.total +
-              (g.resumen.sobreturnos ? ' +' + g.resumen.sobreturnos : '') + '</div>';
+      // La misma barra de ocupación del tablero. Antes decía "5 de 20" y
+      // había que hacer la cuenta; con la barra se ve cómo viene cada día de
+      // la semana sin leer un solo número.
+      html += barraOcupacion(g.resumen.ocupadas, g.resumen.total, g.resumen.ocupacion) +
+              (g.resumen.sobreturnos
+                ? '<div class="cuenta">+' + g.resumen.sobreturnos + ' sobreturno' +
+                  (g.resumen.sobreturnos > 1 ? 's' : '') + '</div>'
+                : '');
       html += ocupados.length
-        ? '<ul>' + ocupados.map(function (t) {
-            return '<li><span class="h">' + txt(t.hora) + '</span> ' +
-                   txt(t.paciente ? (t.paciente.apellido + ', ' + t.paciente.nombre)
-                                  : 'paciente') + '</li>';
-          }).join('') + '</ul>'
+        ? '<ul>' + ocupados.map(itemTurno).join('') + '</ul>'
         : '<div class="vacio-msg">Sin turnos</div>';
     }
     html += '</div>';
@@ -2138,7 +2333,7 @@ function pintarSemana(medicoId, lunes) {
 
   $('ag-avisos').innerHTML = '';
   $('ag-cuerpo').innerHTML = html;
-  sellarAgenda();
+  // (ya no hay sello de hora)
 
   $$('#ag-cuerpo [data-dia]').forEach(function (b) {
     function ir(e) {
@@ -2178,7 +2373,7 @@ function cargarTablero(silencioso) {
         guardarGrillas(c.medico.id, g);
       });
       if (S.vista !== 'agenda' || A.modo !== 'tablero' || A.fecha !== fechaPedida) return;
-      pintarTablero(fechaPedida, r.totales);
+      pintarTablero(fechaPedida);
     })
     .catch(function (err) {
       if (silencioso || S.vista !== 'agenda' || A.modo !== 'tablero') return;
@@ -2186,17 +2381,119 @@ function cargarTablero(silencioso) {
     });
 }
 
-function pintarTablero(fecha, totales) {
-  var columnas = S.sesion.catalogos.medicos.map(function (m) {
+/**
+ * Las columnas del día: todas las que existen, sin filtrar.
+ * Se usa en tres lugares —dibujar, imprimir y exportar— y tiene que dar
+ * siempre lo mismo, o lo que sale en el papel deja de ser lo que se vio.
+ */
+function columnasDelDia(fecha) {
+  return S.sesion.catalogos.medicos.map(function (m) {
     return { medico: m, agenda: A.grillas[claveAgenda(m.id, fecha)] };
   }).filter(function (c) {
     return c.agenda && (c.agenda.franjas.length || c.agenda.sobreturnos.length);
   });
+}
 
-  var html = '<div class="encabezado"><h1>Tablero del centro</h1>' +
-    '<div class="subtitulo">' + txt(fechaLarga(fecha)) + '</div></div>';
+/** ¿Este profesional está a la vista en el tablero? */
+function visibleEnTablero(medicoId) { return !A.ocultos[medicoId]; }
 
-  if (!columnas.length) {
+/**
+ * Los totales del día, contados sobre las columnas QUE SE VEN.
+ *
+ * El servidor manda los totales del centro entero. En cuanto se oculta a
+ * alguien, ese número deja de corresponderse con lo que hay en pantalla, y un
+ * total que no cierra con lo que se está mirando es peor que no tenerlo. Así
+ * que se cuenta acá, con la misma cuenta que hace el servidor.
+ */
+function totalesVisibles(columnas) {
+  var t = { turnos: 0, ausentes: 0, cancelados: 0, franjas: 0, ocupadas: 0 };
+  function contar(x) {
+    var e = String(x.estado).toUpperCase();
+    if (e === 'AUSENTE') t.ausentes++;
+    if (e === 'CANCELADO') t.cancelados++;
+  }
+  columnas.forEach(function (c) {
+    var r = c.agenda.resumen;
+    t.franjas += r.total;
+    t.ocupadas += r.ocupadas;
+    t.turnos += r.ocupadas + (r.sobreturnos || 0);
+    c.agenda.franjas.forEach(function (f) { if (!f.libre) contar(f.turno); });
+    c.agenda.sobreturnos.forEach(contar);
+  });
+  t.ocupacion = t.franjas ? Math.round(t.ocupadas * 100 / t.franjas) : 0;
+  return t;
+}
+
+/**
+ * Los interruptores para mostrar y ocultar a cada profesional.
+ *
+ * ================================================================
+ *  POR QUÉ ESTO NO PUEDE SER UN FILTRO SILENCIOSO
+ *
+ *  Con diez profesionales el tablero son diez columnas angostas, y recepción
+ *  casi siempre está mirando a tres. Poder apagar el resto es lo que hace
+ *  usable la pantalla.
+ *
+ *  Pero ocultar turnos en una agenda es peligroso: alguien puede mirar el
+ *  tablero, no ver a un profesional y concluir que no atiende. Por eso:
+ *
+ *  · Los interruptores están SIEMPRE a la vista, arriba del tablero, no
+ *    escondidos en un menú.
+ *  · Un profesional apagado sigue apareciendo en la lista, tachado, con sus
+ *    turnos contados al lado. Se ve que está y que se lo está escondiendo.
+ *  · Si hay alguno oculto se dice con todas las letras, y "Mostrar todos"
+ *    está a un clic.
+ *  · No se guarda entre sesiones a propósito: al recargar vuelven todos. Una
+ *    computadora de mostrador la usan varias personas, y heredar el filtro de
+ *    otro turno es exactamente cómo alguien termina sin ver una agenda.
+ * ================================================================
+ */
+function filtroProfesionales(todas) {
+  if (todas.length < 2) return '';      // con una sola columna no hay nada que filtrar
+  var ocultos = todas.filter(function (c) { return !visibleEnTablero(c.medico.id); }).length;
+
+  return '<div class="filtro-medicos sin-imprimir">' +
+    '<span class="rot">Mostrar</span>' +
+    todas.map(function (c) {
+      var visible = visibleEnTablero(c.medico.id);
+      var r = c.agenda.resumen;
+      return '<button type="button" class="chip' + (visible ? '' : ' apagado') + '" ' +
+        'data-ver="' + txt(c.medico.id) + '" aria-pressed="' + visible + '" ' +
+        'title="' + (visible ? 'Ocultar a ' : 'Mostrar a ') +
+          txt(c.medico.apellido + ', ' + c.medico.nombre) + ' en el tablero">' +
+        txt(c.medico.apellido) +
+        '<span class="n">' + (r.ocupadas + (r.sobreturnos || 0)) + '</span></button>';
+    }).join('') +
+    (ocultos
+      ? '<span class="aviso-oculto">' + ocultos +
+        (ocultos === 1 ? ' oculto' : ' ocultos') + '</span>' +
+        '<button type="button" class="btn chico" id="tb-todos">Mostrar todos</button>'
+      : '') +
+    '</div>';
+}
+
+function pintarTablero(fecha) {
+  var todas = columnasDelDia(fecha);
+  var columnas = todas.filter(function (c) { return visibleEnTablero(c.medico.id); });
+
+  // La fecha manda, igual que en la vista de día: el tablero es "el día del
+  // centro", y de un tablero se sale con la respuesta a "¿para cuándo te doy
+  // el turno?". Equivocarse de día ahí es el error que hay que evitar.
+  var html = '<div class="encabezado dia">' +
+    '<div class="ubica">' +
+      '<p class="fecha-grande">' + txt(fechaLarga(fecha)) + '</p>' +
+      '<h1>Tablero del centro</h1>' +
+      '<div class="subtitulo">' +
+        (todas.length
+          ? columnas.length + ' de ' + todas.length +
+            (todas.length === 1 ? ' profesional' : ' profesionales') +
+            (columnas.length === todas.length ? ' atendiendo' : ' a la vista')
+          : 'Sin atención') +
+        ' · ' + txt(fecha.substring(0, 4)) +
+      '</div>' +
+    '</div></div>';
+
+  if (!todas.length) {
     // Si alguna grilla del día trae el motivo del cierre, es del centro entero.
     var cerrado = null;
     S.sesion.catalogos.medicos.forEach(function (m) {
@@ -2212,13 +2509,29 @@ function pintarTablero(fecha, totales) {
     return;
   }
 
-  if (totales) {
-    html += '<div class="resumen">' + totales.turnos + ' turnos · ' +
-            totales.ocupacion + ' % de ocupación' +
-            (totales.ausentes ? ' · ' + totales.ausentes + ' ausentes' : '') +
-            (totales.cancelados ? ' · ' + totales.cancelados + ' cancelados' : '') +
-            '</div>';
+  html += filtroProfesionales(todas);
+
+  if (!columnas.length) {
+    // Están todos apagados. No es que nadie atienda: es que se los escondió, y
+    // la pantalla tiene que decir cuál de las dos cosas es.
+    html += '<div class="caja aviso"><h3>Están todos ocultos</h3>' +
+      '<p>Hay ' + todas.length + ' profesional' + (todas.length === 1 ? '' : 'es') +
+      ' atendiendo este día, pero los apagaste a todos con los botones de arriba.</p></div>';
+    $('ag-cuerpo').innerHTML = html;
+    conectarFiltroTablero(fecha);
+    return;
   }
+
+  // Los totales se cuentan sobre lo que se ve. Ver el detalle de tres columnas
+  // y el total de diez es la forma más fácil de sacar una cuenta equivocada.
+  var tot = totalesVisibles(columnas);
+  html += '<div class="resumen">' + tot.turnos + ' turnos · ' +
+          tot.ocupacion + ' % de ocupación' +
+          (tot.ausentes ? ' · ' + tot.ausentes + ' ausentes' : '') +
+          (tot.cancelados ? ' · ' + tot.cancelados + ' cancelados' : '') +
+          (columnas.length < todas.length ? ' · de los ' + columnas.length +
+             ' profesionales a la vista' : '') +
+          '</div>';
 
   html += '<div class="tablero">' + columnas.map(function (c) {
     var g = c.agenda;
@@ -2235,13 +2548,19 @@ function pintarTablero(fecha, totales) {
                            ' title="Dar turno a las ' + txt(f.hora) + '"' : '') + '>' +
                txt(f.hora) + ' · ' + (puedeDar ? 'dar turno' : 'libre') + '</li>';
       }
-      return '<li data-turno="' + txt(f.turno.id) + '" data-med="' + txt(c.medico.id) + '">' +
+      // La clase del estado también acá: una columna llena de cancelados se
+      // veía igual de ocupada que una llena de pacientes por atender.
+      return '<li class="clicable' + claseEstado(f.turno.estado) +
+             '" data-turno="' + txt(f.turno.id) + '" data-med="' + txt(c.medico.id) + '"' +
+             ' tabindex="0" role="button">' +
              '<span class="h">' + txt(f.hora) + '</span> ' +
              txt(f.turno.paciente ? (f.turno.paciente.apellido + ', ' + f.turno.paciente.nombre)
                                   : 'paciente') +
              ' ' + insignia(f.turno.estado) + '</li>';
     }).concat(g.sobreturnos.map(function (t) {
-      return '<li class="sobre" data-turno="' + txt(t.id) + '" data-med="' + txt(c.medico.id) + '">' +
+      return '<li class="sobre clicable' + claseEstado(t.estado) +
+             '" data-turno="' + txt(t.id) + '" data-med="' + txt(c.medico.id) + '"' +
+             ' tabindex="0" role="button">' +
              '<span class="h">+' + txt(t.hora) + '</span> ' +
              txt(t.paciente ? (t.paciente.apellido + ', ' + t.paciente.nombre) : 'paciente') +
              ' ' + insignia(t.estado) + '</li>';
@@ -2262,7 +2581,7 @@ function pintarTablero(fecha, totales) {
 
   $('ag-avisos').innerHTML = '';
   $('ag-cuerpo').innerHTML = html;
-  sellarAgenda();
+  conectarFiltroTablero(fecha);
 
   $$('#ag-cuerpo [data-med-ir]').forEach(function (b) {
     function ir(e) {
@@ -2297,6 +2616,27 @@ function pintarTablero(fecha, totales) {
   $('ag-cuerpo').addEventListener('click', function (e) {
     activarTablero(e);
   });
+}
+
+/**
+ * Los botones de mostrar y ocultar. Solo tocan lo que se dibuja: nada de esto
+ * viaja al servidor ni cambia un turno. Por eso repintar es instantáneo.
+ */
+function conectarFiltroTablero(fecha) {
+  $$('#ag-cuerpo [data-ver]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var id = b.dataset.ver;
+      if (A.ocultos[id]) delete A.ocultos[id];
+      else A.ocultos[id] = true;
+      pintarTablero(fecha);
+    });
+  });
+  if ($('tb-todos')) {
+    $('tb-todos').addEventListener('click', function () {
+      A.ocultos = {};
+      pintarTablero(fecha);
+    });
+  }
 }
 </script>
 
@@ -2936,14 +3276,33 @@ function nuevoSobreturno(medicoId, fecha) {
 //   · La pestaña solo aparece con el alcance TODOS de `paciente.ver`. Ni
 //     enfermería ni los profesionales la ven: ellos tienen el buscador,
 //     que les muestra a quien tiene turno con ellos o en el día.
-//   · El LISTADO no trae teléfonos ni domicilios. Esos aparecen al abrir
-//     una ficha, y abrir una ficha queda auditado: es la única forma de
-//     contestar "¿quién miró los datos de esta persona?" ante un reclamo.
+//   · El listado trae el TELÉFONO, y solo para quien ya podía verlo abriendo
+//     una ficha. El domicilio y las observaciones siguen siendo de la ficha,
+//     y abrir una ficha queda auditado: es la única forma de contestar
+//     "¿quién miró los datos de esta persona?" ante un reclamo.
 //   · No hay ningún dato clínico, y no lo va a haber. Esto es una agenda.
 //  ================================================================
 // =====================================================================
 
-var P = { texto: '', inactivos: false, gen: 0 };
+// tam: cuántos se ven por página. 0 = todos los que trajo el servidor.
+// bloque: el tramo del padrón que ya está en el navegador, tal como llegó.
+var P = { texto: '', inactivos: false, gen: 0, pagina: 1, tam: 20, bloque: null };
+
+// Los tamaños que se pueden elegir. El 0 va último y dice "Todos".
+var TAMANOS = [10, 20, 50, 100, 300, 0];
+
+// ================================================================
+//  POR QUÉ SE PIDEN 300 Y SE MUESTRAN 20
+//
+//  Cada viaje al servidor cuesta más de un segundo, y eso no baja por pedir
+//  menos filas: el costo está en el viaje. Si cada clic en "siguiente"
+//  pidiera diez fichas, pasar diez páginas serían diez esperas.
+//
+//  Así que se traen 300 de una y las páginas se arman en el navegador: pasar
+//  de página no pide NADA hasta que se sale del tramo traído. Es la misma
+//  idea que la ventana de días de la agenda.
+// ================================================================
+var BLOQUE_PADRON = 300;
 
 function vigenteP(gen) { return gen === P.gen && S.vista === 'pacientes'; }
 
@@ -2959,7 +3318,7 @@ function montarPacientes(cont) {
         ? '<button class="btn principal" id="pac-nuevo">Cargar paciente</button>' : '') +
       '<span class="sello" id="pac-cuenta"></span>' +
     '</div>' +
-    '<main><div id="pac-avisos"></div><div id="pac-cuerpo">' +
+    '<main class="ancha"><div id="pac-avisos"></div><div id="pac-cuerpo">' +
       '<div class="cargando">Cargando…</div></div></main>';
 
   $('pac-buscar').addEventListener('input', function () {
@@ -2982,27 +3341,100 @@ function montarPacientes(cont) {
   cargarPacientes();
 }
 
+/** Cambió el filtro: lo que había en el navegador ya no sirve y se vuelve a
+ *  la primera página. */
 function cargarPacientes() {
+  P.bloque = null;
+  P.pagina = 1;
+  irAPaginaPac(1);
+}
+
+/** Se editó una ficha: hay que volver a pedir, pero sin mover a la persona de
+ *  la página en la que estaba. */
+function refrescarPacientes() {
+  if (S.vista !== 'pacientes') return;
+  P.bloque = null;
+  irAPaginaPac(P.pagina);
+}
+
+/** El primer índice del padrón que muestra una página. */
+function primeroDePagina(pagina) { return P.tam ? (pagina - 1) * P.tam : 0; }
+
+function paginasPac() {
+  var b = P.bloque;
+  if (!b || !P.tam) return 1;
+  return Math.max(1, Math.ceil(b.total / P.tam));
+}
+
+/**
+ * Muestra una página, pidiendo al servidor solo si hace falta.
+ *
+ * "Hace falta" es que la página caiga fuera del tramo que ya está en el
+ * navegador. Mientras caiga adentro, cambiar de página es instantáneo.
+ */
+function irAPaginaPac(pagina) {
+  // El recorte al total solo se puede hacer si ya se sabe cuántos hay. Sin
+  // tramo traído todavía no se sabe, y recortar contra un total inventado
+  // mandaría siempre a la página 1.
+  P.pagina = Math.max(1, P.bloque ? Math.min(pagina, paginasPac()) : pagina);
+  var b = P.bloque;
+  var primero = primeroDePagina(P.pagina);
+  var ultimo = P.tam ? (primero + P.tam - 1) : Number.MAX_VALUE;
+
+  if (b) {
+    var finBloque = b.desde + b.pacientes.length;   // primer índice que NO tiene
+    var cubre = primero >= b.desde &&
+                (ultimo < finBloque || finBloque >= b.total);
+    if (cubre) { pintarPacientes(); return; }
+  }
+  // Se pide alineado al bloque para que las páginas siguientes ya estén.
+  pedirBloquePac(P.tam ? Math.floor(primero / BLOQUE_PADRON) * BLOQUE_PADRON : 0);
+}
+
+function pedirBloquePac(desde) {
   var gen = P.gen;
   var cuerpo = $('pac-cuerpo');
   if (!cuerpo) return;
   cuerpo.innerHTML = '<div class="cargando">Buscando…</div>';
 
-  llamar('pacientes.listar', { texto: P.texto, inactivos: P.inactivos })
+  llamar('pacientes.listar', {
+    texto: P.texto, inactivos: P.inactivos,
+    desde: desde,
+    // Con "Todos" no se manda cantidad: el servidor manda lo que entra en un
+    // viaje —su tope— y la pantalla avisa si quedó gente afuera.
+    cantidad: P.tam ? BLOQUE_PADRON : 0
+  })
     .then(function (r) {
       if (!vigenteP(gen)) return;
-      pintarPacientes(r);
+      P.bloque = r;
+      // El servidor puede haber corrido el arranque (si se borró gente y la
+      // página quedó más allá del final): la pantalla se acomoda a lo que vino.
+      if (P.tam && primeroDePagina(P.pagina) < r.desde) {
+        P.pagina = Math.floor(r.desde / P.tam) + 1;
+      }
+      pintarPacientes();
     })
     .catch(function (err) {
       if (!vigenteP(gen)) return;
-      mostrarError(err, $('pac-cuerpo'), cargarPacientes);
+      mostrarError(err, $('pac-cuerpo'), function () { pedirBloquePac(desde); });
     });
 }
 
-function pintarPacientes(r) {
-  $('pac-cuenta').textContent = r.total + ' paciente' + (r.total === 1 ? '' : 's');
+/** Las filas que le tocan a la página actual, recortadas del tramo traído. */
+function filasDePagina() {
+  var b = P.bloque;
+  if (!b) return [];
+  if (!P.tam) return b.pacientes;
+  var i = Math.max(0, primeroDePagina(P.pagina) - b.desde);
+  return b.pacientes.slice(i, i + P.tam);
+}
 
-  if (!r.pacientes.length) {
+function pintarPacientes() {
+  var b = P.bloque;
+  if (!b) return;
+  $('pac-cuenta').textContent = b.total + ' paciente' + (b.total === 1 ? '' : 's');
+
+  if (!b.total) {
     $('pac-cuerpo').innerHTML = P.texto
       ? '<div class="caja"><h3>Nadie con ese dato</h3>' +
         '<p>Probá con menos letras, o con el número de documento.</p></div>'
@@ -3011,31 +3443,119 @@ function pintarPacientes(r) {
     return;
   }
 
+  var filas = filasDePagina();
   var html = '';
-  if (r.total > r.tope) {
-    html += '<div class="caja aviso"><p>Se muestran los primeros <b>' + r.tope +
-      '</b> de ' + r.total + '. Usá el buscador de arriba para encontrar a alguien ' +
-      'puntual: busca sobre el padrón entero, no sobre esta lista.</p></div>';
+
+  // Con "Todos" el servidor manda hasta su tope y no más: si el padrón es más
+  // grande, hay que decirlo. Con páginas esto no pasa nunca, porque se va
+  // pidiendo tramo por tramo.
+  if (!P.tam && b.total > b.pacientes.length) {
+    html += '<div class="caja aviso"><p>Se muestran <b>' + b.pacientes.length +
+      '</b> de ' + b.total + ': de un solo viaje no vienen más. Elegí una cantidad ' +
+      'por página para recorrer el padrón entero, o usá el buscador de arriba, ' +
+      'que busca sobre todo el padrón y no sobre esta lista.</p></div>';
   }
 
-  html += '<div class="tabla-cont"><table><thead><tr>' +
-    '<th>Paciente</th><th>Documento</th><th>Edad</th><th>Obra social</th><th></th>' +
+  // El teléfono solo llega si el rol lo permite. Si no vino en ninguna ficha,
+  // la columna no se dibuja: una columna entera de guiones no informa nada.
+  var hayTel = filas.some(function (p) { return p.telefono !== undefined; });
+
+  html += barraPaginado(b, filas.length);
+  html += '<div class="tabla-cont tabla-scroll"><table><thead><tr>' +
+    '<th>Paciente</th><th>Documento</th><th>Edad</th>' +
+    (hayTel ? '<th>Teléfono</th>' : '') +
+    '<th>Obra social</th><th></th>' +
     '</tr></thead><tbody>' +
-    r.pacientes.map(function (p) {
+    filas.map(function (p) {
       return '<tr' + (p.activo ? '' : ' class="inactiva"') + '>' +
         '<td><b>' + txt(p.apellido + ', ' + p.nombre) + '</b>' +
           (p.activo ? '' : ' <span class="pill no">Baja</span>') + '</td>' +
         '<td class="num">' + txt(p.documento) + '</td>' +
         '<td class="num">' + (p.edad === '' ? '—' : txt(String(p.edad))) + '</td>' +
+        (hayTel ? '<td class="num">' + telefonoCelda(p) + '</td>' : '') +
         '<td>' + txt(p.obra_social || '—') + '</td>' +
         '<td class="acciones"><button class="btn chico" data-pac="' + txt(p.id) +
           '">Ver ficha</button></td></tr>';
     }).join('') + '</tbody></table></div>';
 
   $('pac-cuerpo').innerHTML = html;
-  $$('#pac-cuerpo button[data-pac]').forEach(function (b) {
-    b.addEventListener('click', function () { verPaciente(b.dataset.pac); });
+  $$('#pac-cuerpo button[data-pac]').forEach(function (b2) {
+    b2.addEventListener('click', function () { verPaciente(b2.dataset.pac); });
   });
+  conectarPaginado();
+}
+
+/** El teléfono de la lista, con el segundo abajo si lo hay. */
+function telefonoCelda(p) {
+  var uno = p.telefono || '';
+  var dos = p.telefono_alt || '';
+  if (!uno && !dos) return '—';
+  return (uno ? enlaceTel(uno) : '') +
+         (dos ? '<span class="tel-alt">' + enlaceTel(dos) + '</span>' : '');
+}
+
+/**
+ * El teléfono como enlace `tel:`.
+ *
+ * En la computadora del mostrador no hace nada, y está bien: sigue siendo
+ * texto que se lee y se copia. En un celular o una tablet —que es donde se
+ * llama de verdad cuando hay que avisar que el profesional no viene— marca
+ * el número con un toque.
+ */
+function enlaceTel(numero) {
+  var limpio = String(numero).replace(/[^0-9+]/g, '');
+  if (!limpio) return txt(numero);
+  return '<a href="tel:' + txt(limpio) + '">' + txt(numero) + '</a>';
+}
+
+/**
+ * La barra de paginado: cuántos se ven por página, en qué página se está y
+ * los botones para moverse.
+ */
+function barraPaginado(b, enPantalla) {
+  var paginas = paginasPac();
+  var desde = P.tam ? primeroDePagina(P.pagina) + 1 : 1;
+  var hasta = P.tam ? Math.min(desde + enPantalla - 1, b.total) : enPantalla;
+
+  return '<div class="paginado sin-imprimir">' +
+    '<label class="en-linea">Mostrar ' +
+      '<select id="pac-tam" aria-label="Pacientes por página">' +
+        TAMANOS.map(function (n) {
+          return '<option value="' + n + '"' + (n === P.tam ? ' selected' : '') + '>' +
+                 (n ? n : 'Todos') + '</option>';
+        }).join('') +
+      '</select></label>' +
+    '<span class="rango">' + desde + '–' + hasta + ' de ' + b.total + '</span>' +
+    (P.tam
+      ? '<div class="nav-fechas">' +
+          '<button class="btn chico" id="pac-ant"' + (P.pagina <= 1 ? ' disabled' : '') +
+            ' title="Página anterior" aria-label="Página anterior">&#9664;</button>' +
+          '<button class="btn chico" id="pac-pag" disabled>' +
+            P.pagina + ' / ' + paginas + '</button>' +
+          '<button class="btn chico" id="pac-sig"' +
+            (P.pagina >= paginas ? ' disabled' : '') +
+            ' title="Página siguiente" aria-label="Página siguiente">&#9654;</button>' +
+        '</div>'
+      : '') +
+    '</div>';
+}
+
+function conectarPaginado() {
+  var sel = $('pac-tam');
+  if (sel) {
+    sel.addEventListener('change', function () {
+      // Se conserva a quién estaba mirando: si estaba en el paciente 45 y pasa
+      // de 20 a 50 por página, sigue viendo esa parte del padrón y no vuelve
+      // al principio.
+      var primeroAntes = primeroDePagina(P.pagina);
+      P.tam = Number(this.value) || 0;
+      // Con "Todos" el tramo tiene que empezar en cero, y el que hay puede no.
+      if (!P.tam) { P.bloque = null; P.pagina = 1; irAPaginaPac(1); return; }
+      irAPaginaPac(Math.floor(primeroAntes / P.tam) + 1);
+    });
+  }
+  if ($('pac-ant')) $('pac-ant').addEventListener('click', function () { irAPaginaPac(P.pagina - 1); });
+  if ($('pac-sig')) $('pac-sig').addEventListener('click', function () { irAPaginaPac(P.pagina + 1); });
 }
 
 // ---------------------------------------------------------------- la ficha
@@ -3047,60 +3567,104 @@ function verPaciente(id) {
     .catch(function (err) { mostrarError(err, null); });
 }
 
+/**
+ * La ficha del paciente.
+ *
+ * ================================================================
+ *  QUÉ SE MIRA ACÁ, Y EN QUÉ ORDEN
+ *
+ *  Esta ventana se abre casi siempre con el teléfono en la mano o con la
+ *  persona parada enfrente. Lo que se busca es, por ese orden: quién es
+ *  (para confirmar que es la persona correcta), cómo contactarla, y cuándo
+ *  vino o cuándo viene.
+ *
+ *  Por eso ya no es una lista de once renglones iguales donde el documento y
+ *  el correo pesan lo mismo. Arriba va la identidad —documento, edad, obra
+ *  social— en fichas grandes que se leen de un vistazo; después el contacto,
+ *  con los teléfonos como enlaces para llamar; y al final los turnos.
+ *
+ *  Un dato que no está se dice una sola vez y en gris. Lo que NO hay acá es
+ *  cualquier cosa clínica, y no la va a haber: esto es una agenda.
+ * ================================================================
+ */
 function pintarFicha(p) {
-  var filas = [
-    ['Documento', p.documento],
-    ['Fecha de nacimiento', p.fecha_nacimiento
-        ? fechaCorta(p.fecha_nacimiento) + (p.edad === '' ? '' : '  ·  ' + p.edad + ' años')
-        : ''],
-    ['Sexo', p.sexo],
-    ['Obra social', p.obra_social],
-    ['Teléfono', p.telefono],
-    ['Otro teléfono', p.telefono_alt],
-    ['Correo', p.email]
-  ];
+  var html = '';
 
-  var html = '<div class="tabla-cont"><table><tbody>' +
-    filas.map(function (f) {
-      return '<tr><td class="rotulo-dato">' + txt(f[0]) + '</td>' +
-             '<td class="dato">' + (f[1] ? txt(String(f[1])) : '—') + '</td></tr>';
-    }).join('') +
-    '<tr><td class="rotulo-dato">Domicilio</td><td class="dato">' +
-      enlaceMapa(p.domicilio) + '</td></tr>' +
-    '</tbody></table></div>';
-
-  if (p.observaciones_adm) {
-    html += '<div class="caja"><h3>Observaciones administrativas</h3><p>' +
-            txt(p.observaciones_adm) + '</p></div>';
+  if (!p.activo) {
+    html += '<div class="caja aviso"><h3>Paciente dado de baja</h3>' +
+      '<p>No aparece en las búsquedas ni se le pueden dar turnos nuevos. ' +
+      'Sus turnos anteriores siguen en el sistema.</p></div>';
   }
 
+  // ---- identidad: lo que confirma que es la persona correcta ----
+  html += '<div class="ficha-datos">' +
+    tarjetaDato('Documento', p.documento, 'grande') +
+    tarjetaDato('Edad', p.edad === '' ? '' : p.edad + ' años',
+                '', p.fecha_nacimiento ? 'Nació el ' + fechaCorta(p.fecha_nacimiento) : '') +
+    tarjetaDato('Sexo', p.sexo) +
+    tarjetaDato('Obra social', p.obra_social) +
+    '</div>';
+
+  // ---- contacto: para lo que de verdad se abre esta ventana ----
+  var tel = (p.telefono ? enlaceTel(p.telefono) : '') +
+            (p.telefono_alt ? '<span class="tel-alt">' + enlaceTel(p.telefono_alt) + '</span>' : '');
+  html += '<h2 class="titulo-bloque">Contacto</h2>' +
+    '<div class="ficha-datos">' +
+      tarjetaDato('Teléfono', tel, 'grande', '', true) +
+      tarjetaDato('Correo', p.email
+        ? '<a href="mailto:' + txt(p.email) + '">' + txt(p.email) + '</a>' : '', '', '', true) +
+    '</div>' +
+    '<div class="ficha-datos una">' +
+      tarjetaDato('Domicilio', p.domicilio ? enlaceMapa(p.domicilio) : '', '', '', true) +
+    '</div>';
+
+  if (p.observaciones_adm) {
+    html += '<h2 class="titulo-bloque">Observaciones administrativas</h2>' +
+            '<div class="caja"><p>' + txt(p.observaciones_adm) + '</p>' +
+            '<p class="ayuda">No es información clínica: este sistema no es una ' +
+            'historia clínica.</p></div>';
+  }
+
+  // ---- turnos ----
   if (p.ultimos_turnos && p.ultimos_turnos.length) {
-    html += '<h2 style="margin-top:16px">Últimos turnos</h2>' +
+    html += '<h2 class="titulo-bloque">Últimos turnos</h2>' +
       '<div class="tabla-cont"><table><thead><tr><th>Fecha</th><th>Hora</th>' +
       '<th>Profesional</th><th>Estado</th></tr></thead><tbody>' +
       p.ultimos_turnos.map(function (t) {
-        return '<tr><td class="num">' + txt(fechaCorta(t.fecha)) + '</td>' +
-          '<td class="num">' + txt(t.hora) + (t.es_sobreturno ? ' +' : '') + '</td>' +
+        return '<tr class="' + (t.estado ? 'est-' + txt(t.estado) : '') + '">' +
+          '<td class="num">' + txt(fechaCorta(t.fecha)) + '</td>' +
+          '<td class="num">' + (t.es_sobreturno ? '+' : '') + txt(t.hora) + '</td>' +
           '<td>' + txt(nombreMedico(t.medico_id)) + '</td>' +
           '<td>' + insignia(t.estado) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
   } else if (p.ultimos_turnos) {
-    html += '<p class="ayuda">Sin turnos registrados.</p>';
-  }
-
-  if (!p.activo) {
-    html = '<div class="caja aviso"><h3>Paciente dado de baja</h3>' +
-      '<p>No aparece en las búsquedas ni se le pueden dar turnos nuevos. ' +
-      'Sus turnos anteriores siguen en el sistema.</p></div>' + html;
+    html += '<h2 class="titulo-bloque">Últimos turnos</h2>' +
+            '<p class="ayuda">Sin turnos registrados.</p>';
   }
 
   abrirModal({
     titulo: nombrePaciente(p),
-    ancho: 640,
+    ancho: 680,
     cuerpo: html,
     textoAceptar: puede('paciente.editar') ? 'Editar' : null,
     alAceptar: puede('paciente.editar') ? function () { formPacienteEditar(p); return false; } : null
   });
+}
+
+/**
+ * Un dato de la ficha, con su rótulo arriba en chico y el valor abajo.
+ *
+ * @param crudo true si el valor ya es HTML armado acá (un enlace). Todo lo
+ *              demás se escapa: un apellido con un < no puede romper nada.
+ */
+function tarjetaDato(rotulo, valor, clase, pie, crudo) {
+  var vacio = (valor === null || valor === undefined || valor === '');
+  return '<div class="dato-tarjeta' + (clase ? ' ' + clase : '') + '">' +
+    '<span class="rot">' + txt(rotulo) + '</span>' +
+    '<span class="val' + (vacio ? ' vacio' : '') + '">' +
+      (vacio ? 'Sin dato' : (crudo ? valor : txt(String(valor)))) + '</span>' +
+    (pie && !vacio ? '<span class="pie">' + txt(pie) + '</span>' : '') +
+    '</div>';
 }
 
 /**
@@ -3198,7 +3762,7 @@ function formPacienteEditar(p) {
       }
       return llamar('paciente.editar', datos).then(function () {
         avisar('Ficha actualizada');
-        if (S.vista === 'pacientes') cargarPacientes();
+        refrescarPacientes();
       });
     }
   });
@@ -3567,9 +4131,40 @@ function pintarVelocidad(cont) {
     '<p>Si el trabajo es la parte grande, hay algo que optimizar del lado del servidor. ' +
     'Si lo son el salto y el viaje, el costo es de la plataforma y lo único que baja ' +
     'el tiempo es hacer menos pedidos. Si es la cola, sobran pedidos en vuelo.</p></div>' +
-    '<div id="v-resultado"></div></section>';
+    '<div id="v-resultado"></div>' +
+    bloqueVersion() +
+    '</section>';
 
   $('v-medir').addEventListener('click', medirVelocidad);
+}
+
+/**
+ * La versión desplegada y el último pedido medido.
+ *
+ * Vivían en la cabecera, a la vista todo el día. No hacía falta: son datos de
+ * mantenimiento, no de mostrador. Acá están cuando se los busca —que es
+ * cuando alguien pregunta "¿qué versión tenés?" por teléfono— y no molestan
+ * el resto del tiempo.
+ */
+function bloqueVersion() {
+  var b = S.build || {};
+  var t = S.tiempos;
+  return '<div class="caja" style="margin-top:14px">' +
+    '<h3>Versión y último pedido</h3>' +
+    '<div class="tabla-cont"><table><tbody>' +
+    '<tr><td class="rotulo-dato">Pantalla (PORTAL)</td><td class="dato">' +
+      txt(b.portal || '—') + '</td></tr>' +
+    '<tr><td class="rotulo-dato">Servidor (NÚCLEO)</td><td class="dato">' +
+      txt(b.nucleo || '—') +
+      (b.nucleo && !b.coinciden
+        ? ' <span class="pill no">no coinciden · corré ACTUALIZAR.bat</span>' : '') +
+      '</td></tr>' +
+    '<tr><td class="rotulo-dato">Último pedido</td><td class="dato">' +
+      (t ? txt(t.accion + ' · ' + t.total + ' ms (' + t.nucleo + ' trabajo + ' +
+               t.salto + ' salto + ' + t.viaje + ' viaje)')
+         : 'Todavía no se midió nada en esta pantalla.') +
+      '</td></tr>' +
+    '</tbody></table></div></div>';
 }
 
 function medirVelocidad() {
@@ -5225,65 +5820,31 @@ function marcarProvisoria(si) {
 }
 
 /**
- * Muestra la version desplegada de cada proyecto.
+ * Compara la version desplegada de cada proyecto.
  *
- * Si las dos marcas no coinciden, uno de los dos proyectos quedo sin
- * actualizar. Si coinciden pero son viejas, lo que esta viejo es lo que
- * cargo el navegador. Verlo en pantalla evita tener que deducirlo.
+ * ================================================================
+ *  POR QUÉ ESTO YA NO SE VE EN LA CABECERA
+ *
+ *  La marca de versión estaba arriba a la derecha todo el tiempo. Servía
+ *  mientras se desplegaba varias veces por día; en un mostrador es ruido:
+ *  un número que nadie usa, al lado del nombre de quien está conectado.
+ *
+ *  Lo que SÍ importa es el caso raro: que PORTAL y NÚCLEO queden en
+ *  versiones distintas, porque ahí la pantalla le pide al servidor cosas
+ *  que el servidor todavía no sabe hacer. Eso no se mira, avisa solo —y
+ *  fuerte—, que es lo que corresponde a algo que pasa una vez cada tanto.
+ *
+ *  El número queda guardado en S.build y se muestra en
+ *  Configuración › Velocidad, para cuando hay que decirlo por teléfono.
+ * ================================================================
  */
 function mostrarBuild(buildNucleo) {
-  var el = $('build');
   var portal = (typeof BUILD_PORTAL !== 'undefined') ? BUILD_PORTAL : 'sin marca';
-  if (portal === buildNucleo) {
-    el.textContent = 'v ' + portal;
-    el.title = 'Versión desplegada: ' + portal;
-  } else {
-    el.textContent = 'v ' + portal + ' / ' + buildNucleo;
-    el.style.color = 'var(--alerta)';
-    el.title = 'PORTAL y NÚCLEO tienen versiones distintas. ' +
-               'Volvé a correr ACTUALIZAR.bat.';
+  S.build = { portal: portal, nucleo: buildNucleo, coinciden: portal === buildNucleo };
+  if (!S.build.coinciden) {
     avisar('PORTAL (' + portal + ') y NÚCLEO (' + buildNucleo +
            ') están en versiones distintas. Corré ACTUALIZAR.bat.', 'error');
   }
-}
-
-/**
- * Muestra el tiempo del ultimo pedido, y al hacer clic el desglose.
- * Esta a la vista a proposito: mientras el sistema sea lento, conviene
- * poder decir DONDE se van los segundos en lugar de suponerlo.
- */
-function mostrarTiempos() {
-  var el = $('tiempos');
-  if (!el || !S.tiempos) return;
-  var t = S.tiempos;
-  // El desglose va a la vista, no escondido en el globo de ayuda: asi una
-  // sola captura de pantalla alcanza para saber donde se fue el tiempo.
-  el.textContent = (t.total / 1000).toFixed(1) + ' s (' +
-                   Math.round(t.nucleo / 100) / 10 + '+' +
-                   Math.round(t.salto  / 100) / 10 + '+' +
-                   Math.round(t.viaje  / 100) / 10 + ')';
-  el.style.color = t.total > 3000 ? 'var(--alerta)'
-                 : t.total > 1500 ? 'var(--aviso)' : 'var(--faint)';
-  el.style.cursor = 'pointer';
-  el.title = 'Ultimo pedido: ' + t.accion + '\n' +
-             'Total ' + t.total + ' ms\n' +
-             '  NUCLEO (trabajo real) ' + t.nucleo + ' ms\n' +
-             '  salto entre proyectos ' + t.salto + ' ms\n' +
-             '  arranque y viaje      ' + t.viaje + ' ms\n' +
-             (t.perfil && t.perfil.length
-               ? '\nAdentro de NUCLEO:\n' + t.perfil.map(function (p) {
-                   return '  ' + p.paso + ' ' + p.ms + ' ms' + (p.n > 1 ? ' (x' + p.n + ')' : '');
-                 }).join('\n') + '\n'
-               : '') +
-             '\nClic para verlo en pantalla.';
-  el.onclick = function () {
-    var detalle = (t.perfil || []).slice(0, 5).map(function (p) {
-      return p.paso + ' ' + p.ms + 'ms';
-    }).join(' · ');
-    avisar(t.accion + ': ' + t.total + ' ms = ' + t.nucleo + ' trabajo + ' +
-           t.salto + ' salto + ' + t.viaje + ' viaje' +
-           (detalle ? '  ||  ' + detalle : ''));
-  };
 }
 
 /**
