@@ -752,10 +752,81 @@
     .franja .h{font-size:18px;}
     .franja .quien b{font-size:14px;}
   }
+
+  /* ================================================================
+     EL TELEFONO, DE VERDAD
+
+     Estos saltos existian desde el rediseño pero NUNCA se dispararon: a la
+     pagina estatica le faltaba la etiqueta viewport, asi que el celular se
+     declaraba de 980 px y dibujaba la pantalla de escritorio en miniatura.
+     Con eso arreglado, lo de abajo es lo que faltaba ajustar de verdad.
+     ================================================================ */
+  @media (max-width:620px){
+    /* ------------------------------------------------------------------
+       EL ZOOM DE iOS. Safari agranda la pagina sola al tocar un campo con
+       letra menor a 16 px, y despues NO vuelve: queda todo corrido y hay
+       que achicar a mano. Es el detalle que mas arruina un formulario en un
+       iPhone, y se arregla con un numero.
+       ------------------------------------------------------------------ */
+    select, textarea,
+    input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=hidden]){
+      font-size:16px;
+    }
+    /* La cabecera deja de estar pegada arriba: en el telefono son tres
+       renglones, y tener el 20 % de la pantalla ocupado para siempre es peor
+       que volver a subir cuando hace falta. */
+    header{position:static;}
+
+    /* Una ventana en un telefono ocupa el telefono. Y los botones de abajo
+       van del ancho completo: son el destino del dedo. */
+    .fondo-modal{padding:0;align-items:stretch;}
+    .modal{max-width:none !important;border-radius:0;margin:0;min-height:100%;}
+    .modal .cuerpo{padding:14px;}
+    .modal .pie{padding:12px 14px;position:sticky;bottom:0;background:var(--surface);
+                border-top:1px solid var(--rule-fuerte);}
+    .modal .pie .btn{flex:1 1 auto;justify-content:center;}
+    .persona{margin:-14px -14px 12px;padding:12px 14px;}
+    .persona h4{font-size:18px;}
+    /* Cada dato de contacto, un renglon entero: en una fila de tres no entra
+       ni un telefono. */
+    .acciones-contacto{flex-direction:column;}
+    .acciones-contacto .accion{width:100%;}
+
+    /* El paginado del padron se apila en vez de desbordar. */
+    .paginado{gap:8px 12px;}
+    .paginado .nav-fechas{margin-left:0;flex:1 1 100%;}
+    .paginado .nav-fechas .btn{flex:1;}
+    .tabla-scroll{max-height:none;}
+
+    /* Los botones de cada fila de Usuarios son cuatro: que se acomoden en
+       dos renglones en vez de estirar la tabla a lo ancho. */
+    td.acciones{white-space:normal;}
+    td.acciones .btn{margin-bottom:3px;}
+    .filtro-medicos .cab{gap:8px;}
+    .filtro-medicos .aviso-oculto{margin-left:0;}
+  }
+
+  /* ================================================================
+     PANTALLAS QUE SE TOCAN
+
+     No es lo mismo un raton que un dedo: un boton de 30 px se acierta con
+     el puntero y se falla con el pulgar. Se cuelga de (hover:none) y no de
+     un ancho, porque una tablet de 1024 px tambien se toca.
+     ================================================================ */
+  @media (hover:none){
+    .btn.chico{min-height:38px;padding:7px 12px;}
+    .chip{min-height:40px;}
+    label.permiso{padding:11px;}
+    label.permiso input{width:20px;height:20px;}
+    nav.menu button{min-height:42px;}
+    .franja.clicable,.col-medico li.clicable{min-height:46px;}
+  }
   @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important;}}
 </style>
 
 <title>Agenda de Turnos · CIC 2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#15607F">
 <meta name="robots" content="noindex, nofollow">
 </head>
 <body>
@@ -807,7 +878,7 @@
 // transporte_web.html.
 var CLIENT_ID    = "873472275504-qia4rjcejadpagkgam7urn0bahq0n7ur.apps.googleusercontent.com";
 var URL_NUCLEO   = "https://script.google.com/macros/s/AKfycby-OWNY3iXvC4ssuWxHb_jogLtNbUtNlPX8bGY3IMu571aKJPFxKWoHUpE-0x4xy_kb/exec";
-var BUILD_PORTAL = "2026-09-06 17:41";
+var BUILD_PORTAL = "2026-09-06 17:53";
 var URL_PORTAL   = "";   // no aplica: esta pantalla no vive en Apps Script
 </script>
 
