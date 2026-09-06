@@ -602,8 +602,23 @@
      lo que usa la minoria seria hacer que la mayoria lea todos los dias un
      cartel que no le sirve.
      ================================================================ */
-  .caja-cortina.ingreso{text-align:left;max-width:380px;}
-  .caja-cortina.ingreso h2{text-align:center;font-size:18px;margin-bottom:16px;}
+  .caja-cortina.ingreso{text-align:left;max-width:392px;}
+  /* La marca de la pantalla de ingreso: el logo y el nombre, del tamano que
+     corresponde a lo primero que se ve al abrir el sistema. */
+  .marca-ingreso{display:flex;align-items:center;gap:14px;
+                 justify-content:center;margin-bottom:20px;}
+  .marca-ingreso .logo{width:58px;height:58px;border-radius:50%;display:block;
+                       flex:none;background:#fff;box-shadow:0 0 0 1px var(--rule);}
+  .caja-cortina.ingreso h2{text-align:left;margin:0;font-size:23px;font-weight:700;
+                           letter-spacing:-.02em;line-height:1.15;}
+  .caja-cortina.ingreso h2 small{display:block;font-weight:500;font-size:11.5px;
+                                 color:var(--muted);letter-spacing:.11em;
+                                 text-transform:uppercase;margin-top:6px;}
+  @media (max-width:420px){
+    .marca-ingreso{gap:11px;}
+    .marca-ingreso .logo{width:46px;height:46px;}
+    .caja-cortina.ingreso h2{font-size:20px;}
+  }
   .caja-cortina.ingreso .campo{margin-bottom:12px;}
   .caja-cortina.ingreso label{text-align:left;}
   .caja-cortina.ingreso .ayuda{text-align:center;margin-top:12px;font-size:12px;
@@ -788,7 +803,7 @@
 // transporte_web.html.
 var CLIENT_ID    = "873472275504-qia4rjcejadpagkgam7urn0bahq0n7ur.apps.googleusercontent.com";
 var URL_NUCLEO   = "https://script.google.com/macros/s/AKfycby-OWNY3iXvC4ssuWxHb_jogLtNbUtNlPX8bGY3IMu571aKJPFxKWoHUpE-0x4xy_kb/exec";
-var BUILD_PORTAL = "2026-09-06 16:36";
+var BUILD_PORTAL = "2026-09-06 16:51";
 var URL_PORTAL   = "";   // no aplica: esta pantalla no vive en Apps Script
 </script>
 
@@ -1028,7 +1043,8 @@ function pantallaDeIngreso(res, rej) {
   capa.className = 'cortina';
   capa.innerHTML =
     '<div class="caja-cortina ingreso">' +
-      '<h2>Agenda de Turnos · CIC 2</h2>' +
+      '<div class="marca-ingreso">' + logoDelSistema() +
+        '<h2>Agenda de Turnos<small>CIC 2 · Balcarce</small></h2></div>' +
       '<div id="ingreso-error"></div>' +
       '<form id="ingreso-form" autocomplete="on">' +
         '<div class="campo"><label for="in-usuario">Usuario</label>' +
@@ -1091,6 +1107,20 @@ function pantallaDeIngreso(res, rej) {
   });
 
   setTimeout(function () { if ($('in-usuario')) $('in-usuario').focus(); }, 60);
+}
+
+/**
+ * El logo del CIC 2, para la pantalla de ingreso.
+ *
+ * Se saca del que ya está en la cabecera en vez de repetir la imagen: es un
+ * data-URI de 22 KB, y tenerlo dos veces en el archivo lo engorda para nada.
+ * Si por lo que sea no estuviera, la pantalla se dibuja igual sin logo: nadie
+ * se queda afuera del sistema por una imagen.
+ */
+function logoDelSistema() {
+  var img = document.querySelector('.marca img, .marca .logo');
+  if (!img || !img.src) return '';
+  return '<img class="logo" src="' + img.src + '" alt="">';
 }
 
 function ocultarPantallaDeIngreso() {
