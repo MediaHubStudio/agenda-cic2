@@ -249,15 +249,17 @@
      buscando "el martes" o "el 9", no leyendo siete renglones del mismo
      tamano. Y HOY se dice con una palabra ademas del borde de color: con
      siete columnas, un borde se pierde. */
-  .dia-semana h4.rotulo{display:flex;align-items:baseline;gap:7px;}
-  .dia-semana .dia-num{font-family:var(--mono);font-size:21px;font-weight:700;
-                       line-height:1;color:var(--ink);
-                       font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
-  .dia-semana .dia-nom{font-size:12px;font-weight:600;color:var(--muted);}
-  .dia-semana.hoy .dia-num{color:var(--acento);}
+  .dia-semana h4.rotulo{display:flex;align-items:baseline;gap:6px;}
+  /* El numero y el nombre del dia pesan lo mismo: son UN dato, "martes 8", y
+     partirlo en dos tamanos hacia leer dos cosas donde hay una. */
+  .dia-semana .dia-num,.dia-semana .dia-nom{font-size:15px;font-weight:700;
+                                            line-height:1.2;color:var(--ink);
+                                            letter-spacing:-.01em;}
+  .dia-semana .dia-num{font-variant-numeric:tabular-nums;}
+  .dia-semana.hoy .dia-num,.dia-semana.hoy .dia-nom{color:var(--acento);}
   .pill.hoy{margin-left:auto;background:var(--acento);color:var(--sobre-acento);
             font-weight:700;letter-spacing:.04em;}
-  .dia-semana.cerrado .dia-num{color:var(--faint);}
+  .dia-semana.cerrado .dia-num,.dia-semana.cerrado .dia-nom{color:var(--faint);}
   /* La cabecera de columna del tablero se queda a la vista mientras se
      recorre un dia largo: una lista de veinte turnos sin saber de quien es
      obliga a subir cada vez. */
@@ -280,25 +282,47 @@
      desaparece nadie de la lista de botones; lo unico que desaparece es su
      columna, y arriba dice cuantos hay apagados.
      ================================================================ */
-  .filtro-medicos{display:flex;flex-wrap:wrap;align-items:center;gap:6px;
-                  margin-bottom:12px;padding-bottom:10px;
-                  border-bottom:1px solid var(--rule);}
+  .filtro-medicos{margin-bottom:14px;padding:10px 12px;border-radius:6px;
+                  background:var(--surface);border:1px solid var(--rule);}
+  .filtro-medicos .cab{display:flex;align-items:center;gap:10px;
+                       margin-bottom:8px;flex-wrap:wrap;}
   .filtro-medicos .rot{font-size:11px;letter-spacing:.06em;text-transform:uppercase;
-                       color:var(--muted);font-weight:600;margin-right:2px;}
-  .chip{display:inline-flex;align-items:center;gap:6px;
-        background:var(--acento-suave);border:1px solid var(--acento);
-        color:var(--acento-ink);border-radius:14px;padding:4px 10px;
-        min-height:28px;font-size:12.5px;font-weight:560;cursor:pointer;
+                       color:var(--muted);font-weight:600;}
+  .filtro-medicos .cab .ayuda{margin:0;font-size:11.5px;color:var(--faint);}
+  .filtro-medicos .aviso-oculto{margin-left:auto;font-size:12px;font-weight:600;
+                                color:var(--aviso);}
+  .filtro-medicos .cab .btn{margin-left:0;}
+  .filtro-medicos .cab .aviso-oculto + .btn{margin-left:0;}
+  .filtro-medicos .chips{display:flex;flex-wrap:wrap;gap:6px;}
+
+  /* El boton es una casilla de verificacion con nombre: cuadradito, apellido
+     y cuantos turnos tiene. Encendido y apagado se distinguen por la FORMA
+     -- tilde o cuadro vacio -- y no solo por el color, que es la regla de
+     todo el sistema: con sol en una tablet, o para quien no distingue bien
+     los tonos, un azul y un gris claro son el mismo boton. */
+  .chip{display:inline-flex;align-items:center;gap:7px;
+        background:var(--surface);border:1px solid var(--rule-fuerte);
+        color:var(--ink);border-radius:5px;padding:5px 9px;
+        min-height:32px;font-size:13px;font-weight:560;cursor:pointer;
         white-space:nowrap;}
-  .chip .n{font-family:var(--mono);font-size:11px;font-weight:600;opacity:.75;
-           font-variant-numeric:tabular-nums;}
-  .chip:hover{border-color:var(--acento-ink);}
+  .chip .tic{width:14px;height:14px;flex:none;border-radius:3px;
+             border:1.5px solid var(--rule-fuerte);background:var(--surface);
+             position:relative;}
+  .chip .tic::after{content:"";position:absolute;left:3.5px;top:.5px;
+                    width:4px;height:8px;border:solid var(--sobre-acento);
+                    border-width:0 2px 2px 0;transform:rotate(42deg);opacity:0;}
+  .chip[aria-pressed="true"]{border-color:var(--acento);background:var(--acento-suave);
+                             color:var(--acento-ink);}
+  .chip[aria-pressed="true"] .tic{background:var(--acento);border-color:var(--acento);}
+  .chip[aria-pressed="true"] .tic::after{opacity:1;}
+  .chip .n{font-family:var(--mono);font-size:11.5px;font-weight:600;
+           font-variant-numeric:tabular-nums;color:var(--muted);
+           background:var(--surface-2);border-radius:9px;padding:1px 6px;}
+  .chip[aria-pressed="true"] .n{background:var(--surface);color:var(--acento-ink);}
+  .chip:hover{border-color:var(--acento);}
   .chip:focus-visible{outline:2px solid var(--acento);outline-offset:2px;}
-  .chip.apagado{background:var(--surface-2);border-color:var(--rule-fuerte);
-                color:var(--faint);text-decoration:line-through;font-weight:400;}
-  .chip.apagado .n{text-decoration:none;}
-  .filtro-medicos .aviso-oculto{font-size:12px;color:var(--aviso);font-weight:600;
-                                margin-left:auto;}
+  .chip.apagado{color:var(--faint);font-weight:500;}
+  .chip.apagado .quien{text-decoration:line-through;}
   /* Ficha del paciente: rotulo a la izquierda, dato a la derecha. */
   td.rotulo-dato{color:var(--muted);font-size:13px;width:34%;white-space:nowrap;}
   td.dato .ayuda{display:block;font-size:11.5px;color:var(--faint);}
@@ -425,9 +449,15 @@
      mismo; ahora los datos que identifican a la persona van en tarjetas que
      se leen de un vistazo, y el contacto abajo, aparte.
      ================================================================ */
-  .titulo-bloque{font-size:12px;letter-spacing:.06em;text-transform:uppercase;
-                 color:var(--muted);font-weight:600;margin:18px 0 8px;}
-  .ficha-datos{display:grid;gap:10px;margin-bottom:4px;
+  .titulo-bloque{display:flex;align-items:center;gap:10px;
+                 font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+                 color:var(--muted);font-weight:700;margin:18px 0 8px;}
+  .titulo-bloque::after{content:"";flex:1;height:1px;background:var(--rule);}
+  .titulo-bloque:first-child{margin-top:0;}
+  /* align-items:start es lo que evita el hueco: sin eso todas las tarjetas se
+     estiran a la altura de la mas alta -- la que tiene fecha de nacimiento al
+     pie -- y el valor queda flotando arriba de una franja vacia. */
+  .ficha-datos{display:grid;gap:8px;margin-bottom:4px;align-items:start;
                grid-template-columns:repeat(auto-fit,minmax(150px,1fr));}
   .ficha-datos.una{grid-template-columns:1fr;}
   .dato-tarjeta{border:1px solid var(--rule);border-radius:5px;padding:8px 11px;
@@ -444,9 +474,25 @@
   .dato-tarjeta .val .tel-alt{display:block;font-size:14px;color:var(--muted);margin-top:2px;}
   .dato-tarjeta .val .ayuda{display:block;font-size:11.5px;color:var(--faint);
                             font-weight:400;font-family:inherit;letter-spacing:0;}
+  /* La flechita de "se abre en otra pestana". El aviso completo esta en el
+     globo de ayuda del enlace: antes ocupaba un renglon gris entero, tanto
+     como el domicilio que explicaba. */
+  a .afuera{font-size:11px;color:var(--faint);margin-left:3px;
+            text-decoration:none;display:inline-block;}
   /* Los turnos pasados de la ficha, con el mismo codigo que la agenda. */
   tbody tr.est-CANCELADO td,tbody tr.est-REPROGRAMADO td{color:var(--faint);}
   tbody tr.est-ATENDIDO td{color:var(--muted);}
+  /* Lo que todavia no paso: es lo que se busca cuando se abre una ficha con
+     el telefono en la mano. Se marca con palabra ademas de color. */
+  tbody tr.proxima td{background:var(--acento-suave);}
+  tbody tr.proxima td:first-child{box-shadow:inset 3px 0 0 var(--acento);}
+  .marca-prox,.marca-sobre{display:block;font-family:var(--sans);font-size:10px;
+                           letter-spacing:.05em;text-transform:uppercase;
+                           font-weight:700;margin-top:1px;}
+  .marca-prox{color:var(--acento);}
+  .marca-sobre{color:var(--aviso);}
+  .pie-tabla{margin:0;padding:7px 12px;border-top:1px solid var(--rule);
+             background:var(--surface-2);font-size:11.5px;}
 
   /* ---------------- avisos ---------------- */
   .caja{padding:12px 14px;border-left:3px solid var(--rule-fuerte);margin-bottom:14px;
@@ -528,8 +574,7 @@
     h4.rotulo{font-size:11pt;border-bottom:1px solid #999;padding-bottom:2pt;color:#000;
               position:static;}
     h4.rotulo small{color:#333;}
-    .dia-semana .dia-num{font-size:13pt;color:#000;}
-    .dia-semana .dia-nom{font-size:10pt;color:#000;}
+    .dia-semana .dia-num,.dia-semana .dia-nom{font-size:11pt;color:#000;}
     /* En el papel la fecha grande sigue siendo el dato que ubica la hoja, pero
        en tinta negra: un titulo celeste en una impresora laser sale gris. */
     .fecha-grande{color:#000;font-size:15pt;}
@@ -670,7 +715,7 @@
 // transporte_web.html.
 var CLIENT_ID    = "873472275504-qia4rjcejadpagkgam7urn0bahq0n7ur.apps.googleusercontent.com";
 var URL_NUCLEO   = "https://script.google.com/macros/s/AKfycby-OWNY3iXvC4ssuWxHb_jogLtNbUtNlPX8bGY3IMu571aKJPFxKWoHUpE-0x4xy_kb/exec";
-var BUILD_PORTAL = "2026-09-06 10:51";
+var BUILD_PORTAL = "2026-09-06 11:32";
 var URL_PORTAL   = "";   // no aplica: esta pantalla no vive en Apps Script
 </script>
 
@@ -2452,24 +2497,35 @@ function filtroProfesionales(todas) {
   if (todas.length < 2) return '';      // con una sola columna no hay nada que filtrar
   var ocultos = todas.filter(function (c) { return !visibleEnTablero(c.medico.id); }).length;
 
+  // El encabezado va en su propia línea y no al final de los botones: con
+  // diez profesionales la fila se parte en dos o tres, y "4 ocultos" terminaba
+  // colgado a la derecha de la última, lejos de lo que explica.
   return '<div class="filtro-medicos sin-imprimir">' +
-    '<span class="rot">Mostrar</span>' +
+    '<div class="cab">' +
+      '<span class="rot">Profesionales del día</span>' +
+      (ocultos
+        ? '<span class="aviso-oculto">' + ocultos +
+          (ocultos === 1 ? ' oculto' : ' ocultos') + '</span>' +
+          '<button type="button" class="btn chico" id="tb-todos">Mostrar todos</button>'
+        : '<span class="ayuda">Tocá uno para sacarlo del tablero</span>') +
+    '</div>' +
+    '<div class="chips">' +
     todas.map(function (c) {
       var visible = visibleEnTablero(c.medico.id);
       var r = c.agenda.resumen;
+      // El cuadradito con el tilde es lo que dice si está encendido. El color
+      // acompaña, pero la forma alcanza sola: con sol en la pantalla de una
+      // tablet, o para quien no distingue bien los tonos, un azul y un gris
+      // claro son el mismo botón.
       return '<button type="button" class="chip' + (visible ? '' : ' apagado') + '" ' +
         'data-ver="' + txt(c.medico.id) + '" aria-pressed="' + visible + '" ' +
         'title="' + (visible ? 'Ocultar a ' : 'Mostrar a ') +
           txt(c.medico.apellido + ', ' + c.medico.nombre) + ' en el tablero">' +
-        txt(c.medico.apellido) +
+        '<span class="tic" aria-hidden="true"></span>' +
+        '<span class="quien">' + txt(c.medico.apellido) + '</span>' +
         '<span class="n">' + (r.ocupadas + (r.sobreturnos || 0)) + '</span></button>';
     }).join('') +
-    (ocultos
-      ? '<span class="aviso-oculto">' + ocultos +
-        (ocultos === 1 ? ' oculto' : ' ocultos') + '</span>' +
-        '<button type="button" class="btn chico" id="tb-todos">Mostrar todos</button>'
-      : '') +
-    '</div>';
+    '</div></div>';
 }
 
 function pintarTablero(fecha) {
@@ -3597,10 +3653,11 @@ function pintarFicha(p) {
   }
 
   // ---- identidad: lo que confirma que es la persona correcta ----
-  html += '<div class="ficha-datos">' +
+  html += '<h2 class="titulo-bloque">Identidad</h2>' +
+    '<div class="ficha-datos">' +
     tarjetaDato('Documento', p.documento, 'grande') +
-    tarjetaDato('Edad', p.edad === '' ? '' : p.edad + ' años',
-                '', p.fecha_nacimiento ? 'Nació el ' + fechaCorta(p.fecha_nacimiento) : '') +
+    tarjetaDato('Edad', p.edad === '' ? '' : p.edad + ' años', 'grande',
+                p.fecha_nacimiento ? 'nació el ' + fechaCorta(p.fecha_nacimiento) : '') +
     tarjetaDato('Sexo', p.sexo) +
     tarjetaDato('Obra social', p.obra_social) +
     '</div>';
@@ -3626,20 +3683,33 @@ function pintarFicha(p) {
   }
 
   // ---- turnos ----
+  //
+  // Se marca cuáles ya pasaron y cuáles no. La lista mezcla las dos cosas
+  // —los próximos primero, porque están ordenados por fecha hacia atrás— y en
+  // el mostrador la pregunta casi siempre es "¿cuándo tiene el próximo?".
+  // Sin la marca hay que comparar cada fecha con el calendario mentalmente.
+  var hoy = S.sesion.hoy || hoyLocal();
   if (p.ultimos_turnos && p.ultimos_turnos.length) {
-    html += '<h2 class="titulo-bloque">Últimos turnos</h2>' +
+    html += '<h2 class="titulo-bloque">Turnos</h2>' +
       '<div class="tabla-cont"><table><thead><tr><th>Fecha</th><th>Hora</th>' +
       '<th>Profesional</th><th>Estado</th></tr></thead><tbody>' +
       p.ultimos_turnos.map(function (t) {
-        return '<tr class="' + (t.estado ? 'est-' + txt(t.estado) : '') + '">' +
-          '<td class="num">' + txt(fechaCorta(t.fecha)) + '</td>' +
-          '<td class="num">' + (t.es_sobreturno ? '+' : '') + txt(t.hora) + '</td>' +
+        var proximo = String(t.fecha) >= hoy &&
+                      ['CANCELADO', 'REPROGRAMADO'].indexOf(String(t.estado)) < 0;
+        return '<tr class="' + (t.estado ? 'est-' + txt(t.estado) : '') +
+            (proximo ? ' proxima' : '') + '">' +
+          '<td class="num">' + txt(fechaCorta(t.fecha)) +
+            (proximo ? '<span class="marca-prox">próximo</span>' : '') + '</td>' +
+          '<td class="num">' + txt(t.hora) +
+            (t.es_sobreturno ? '<span class="marca-sobre">sobreturno</span>' : '') + '</td>' +
           '<td>' + txt(nombreMedico(t.medico_id)) + '</td>' +
           '<td>' + insignia(t.estado) + '</td></tr>';
-      }).join('') + '</tbody></table></div>';
+      }).join('') + '</tbody></table>' +
+      '<p class="ayuda pie-tabla">Los diez más recientes. La historia completa está ' +
+      'en la planilla.</p></div>';
   } else if (p.ultimos_turnos) {
-    html += '<h2 class="titulo-bloque">Últimos turnos</h2>' +
-            '<p class="ayuda">Sin turnos registrados.</p>';
+    html += '<h2 class="titulo-bloque">Turnos</h2>' +
+            '<div class="caja"><p>Sin turnos registrados.</p></div>';
   }
 
   abrirModal({
@@ -3680,9 +3750,13 @@ function tarjetaDato(rotulo, valor, clase, pie, crudo) {
 function enlaceMapa(domicilio) {
   if (!domicilio) return '—';
   var consulta = encodeURIComponent(domicilio + ', Balcarce, Buenos Aires, Argentina');
+  // El "abre en otra pestaña" iba abajo, en un renglón gris propio, y ocupaba
+  // tanto como el domicilio. Va como globo de ayuda y una flechita: se sigue
+  // avisando, sin que la advertencia pese más que el dato.
   return '<a href="https://www.google.com/maps/search/?api=1&query=' + consulta + '" ' +
-         'target="_blank" rel="noopener">' + txt(domicilio) + '</a>' +
-         '<span class="ayuda">Abre en Google Maps, en una pestaña nueva.</span>';
+         'target="_blank" rel="noopener" ' +
+         'title="Buscarlo en Google Maps (se abre en una pestaña nueva)">' +
+         txt(domicilio) + '<span class="afuera" aria-hidden="true">↗</span></a>';
 }
 
 // ---------------------------------------------------------------- editar
