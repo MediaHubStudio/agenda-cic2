@@ -494,6 +494,40 @@
   .pie-tabla{margin:0;padding:7px 12px;border-top:1px solid var(--rule);
              background:var(--surface-2);font-size:11.5px;}
 
+  /* ================================================================
+     ROLES Y PERMISOS
+
+     Cuarenta casillas puestas una abajo de otra no se leen. Van agrupadas,
+     cada grupo con su marco y su boton de "todos", y las que dan poder de
+     administrar el sistema se ven distintas: son las unicas con las que se
+     puede dejar a todo el mundo afuera.
+     ================================================================ */
+  .permisos-resumen{font-size:12.5px;color:var(--muted);}
+  .permisos-resumen b{color:var(--ink);font-family:var(--mono);font-size:11.5px;}
+  .marca-gobierno{margin-top:2px;font-size:10.5px;letter-spacing:.05em;
+                  text-transform:uppercase;font-weight:700;color:var(--aviso);}
+  .grupo-permisos{border:1px solid var(--rule);border-radius:6px;
+                  margin-bottom:10px;overflow:hidden;}
+  .grupo-permisos .cab{display:flex;align-items:center;gap:10px;
+                       padding:7px 11px;background:var(--surface-2);
+                       border-bottom:1px solid var(--rule);}
+  .grupo-permisos .cab .rot{font-size:11px;letter-spacing:.06em;
+                            text-transform:uppercase;color:var(--muted);font-weight:700;}
+  .grupo-permisos .cab .btn{margin-left:auto;}
+  label.permiso{display:flex;align-items:flex-start;gap:9px;margin:0;
+                padding:7px 11px;font-size:13.5px;color:var(--ink);cursor:pointer;
+                border-bottom:1px solid var(--rule);}
+  label.permiso:last-child{border-bottom:0;}
+  label.permiso:hover{background:var(--acento-suave);}
+  label.permiso input{margin:2px 0 0;flex:none;}
+  label.permiso .texto{min-width:0;}
+  /* Los permisos con los que se puede dejar al sistema sin dueno. El servidor
+     rechaza el guardado igual; esto es para que no haya que descubrirlo. */
+  label.permiso.gobierno{background:var(--aviso-suave);}
+  label.permiso.gobierno:hover{background:var(--aviso-suave);}
+  label.permiso .cuidado{display:block;font-size:10.5px;letter-spacing:.05em;
+                         text-transform:uppercase;font-weight:700;color:var(--aviso);}
+
   /* ---------------- avisos ---------------- */
   .caja{padding:12px 14px;border-left:3px solid var(--rule-fuerte);margin-bottom:14px;
         font-size:14px;border-radius:0 4px 4px 0;background:var(--surface);}
@@ -715,7 +749,7 @@
 // transporte_web.html.
 var CLIENT_ID    = "873472275504-qia4rjcejadpagkgam7urn0bahq0n7ur.apps.googleusercontent.com";
 var URL_NUCLEO   = "https://script.google.com/macros/s/AKfycby-OWNY3iXvC4ssuWxHb_jogLtNbUtNlPX8bGY3IMu571aKJPFxKWoHUpE-0x4xy_kb/exec";
-var BUILD_PORTAL = "2026-09-06 11:32";
+var BUILD_PORTAL = "2026-09-06 16:12";
 var URL_PORTAL   = "";   // no aplica: esta pantalla no vive en Apps Script
 </script>
 
@@ -3866,6 +3900,7 @@ var SECCIONES_CONFIG = [
   { id:'consultorios',  etiqueta:'Consultorios', permiso:'config.catalogos', pintar:function(c){pintarCatalogo(c,'CONSULTORIOS');} },
   { id:'tipos',         etiqueta:'Tipos de consulta',permiso:'config.catalogos',pintar:function(c){pintarCatalogo(c,'TIPOS_CONSULTA');} },
   { id:'usuarios',      etiqueta:'Usuarios y roles',permiso:'config.usuarios',pintar:pintarUsuarios },
+  { id:'roles',         etiqueta:'Roles y permisos',permiso:'config.roles',   pintar:pintarRoles },
   { id:'feriados',      etiqueta:'Feriados',       permiso:'config.catalogos',pintar:pintarFeriados },
   { id:'velocidad',     etiqueta:'Velocidad',      permiso:'config.sistema',  pintar:pintarVelocidad }
 ];
@@ -4806,12 +4841,209 @@ function confirmarBajaPlantilla(p) {
   });
 }
 
+// ================================================================ roles
+//
+//  ================================================================
+//   ESTA ES LA PANTALLA MÁS PELIGROSA DEL SISTEMA
+//
+//   No porque toque datos de pacientes —no toca ninguno— sino porque es la
+//   única desde la que se puede dejar al sistema sin nadie que pueda entrar
+//   a arreglarlo. Por eso:
+//
+//   · Los permisos de gobierno —dar de alta usuarios, editar roles— se
+//     marcan aparte, con una advertencia al lado. El servidor además
+//     rechaza el guardado si con ese cambio no quedara nadie que los tenga.
+//   · Cada rol dice CUÁNTA GENTE lo está usando, antes de tocarlo.
+//   · Nada se guarda hasta apretar Guardar. Marcar y desmarcar casillas no
+//     cambia permisos de nadie hasta ese momento.
+//  ================================================================
+
+function pintarRoles(cont) {
+  var gen = C.gen;
+  cont.innerHTML = '<div class="cargando">Cargando…</div>';
+  llamarCacheado('config.roles.listar', {}).then(function (r) {
+    if (!vigente(gen)) return;
+    C.roles = r;
+
+    cont.innerHTML =
+      '<section class="bloque ancha"><h2>Roles y permisos' +
+        '<span class="der"><button class="btn principal chico" id="rol-nuevo">Crear rol</button></span></h2>' +
+        '<div class="caja"><p>Un rol es un conjunto de permisos. Un usuario puede tener ' +
+        '<b>varios roles a la vez</b> y los permisos se <b>suman</b>: nunca se restan. ' +
+        'Por eso no hay forma de «quitarle» algo a alguien agregándole un rol.</p>' +
+        '<p class="ayuda">Los cuatro roles de fábrica se pueden editar pero no dar de baja: ' +
+        'el sistema los nombra por su identificador.</p></div>' +
+        '<div class="tabla-cont"><table><thead><tr>' +
+          '<th>Rol</th><th>Usuarios</th><th>Permisos</th><th></th>' +
+        '</tr></thead><tbody>' +
+        r.roles.map(function (rol) {
+          return '<tr' + (rol.activo ? '' : ' class="inactiva"') + '>' +
+            '<td><b>' + txt(rol.nombre) + '</b>' +
+              (rol.sistema ? ' <span class="pill">de fábrica</span>' : '') +
+              (rol.activo ? '' : ' <span class="pill no">Baja</span>') +
+              '<div class="ayuda">' + txt(rol.id) +
+                (rol.descripcion ? ' · ' + txt(rol.descripcion) : '') + '</div></td>' +
+            '<td class="num">' + rol.usuarios + '</td>' +
+            '<td>' + resumenDePermisos(rol, r) + '</td>' +
+            '<td class="acciones">' +
+              '<button class="btn chico" data-rol="' + txt(rol.id) + '">Editar</button>' +
+              (rol.sistema || !rol.activo ? ''
+                : ' <button class="btn chico peligro" data-baja="' + txt(rol.id) + '">Dar de baja</button>') +
+            '</td></tr>';
+        }).join('') + '</tbody></table></div></section>';
+
+    $('rol-nuevo').addEventListener('click', function () { formRol(null, r); });
+    $$('#cfg-cuerpo button[data-rol]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        formRol(r.roles.filter(function (x) { return x.id === b.dataset.rol; })[0], r);
+      });
+    });
+    $$('#cfg-cuerpo button[data-baja]').forEach(function (b) {
+      b.addEventListener('click', function () { bajaDeRol(b.dataset.baja, r); });
+    });
+  }).catch(function (err) {
+    if (!vigente(gen)) return;
+    mostrarError(err, cont, function () { recargarConfig(); });
+  });
+}
+
+/** Qué tiene este rol, en una línea. No la lista entera: con cuarenta
+ *  permisos la tabla sería ilegible. Lo que sí se dice siempre es si tiene
+ *  permisos de gobierno, porque eso cambia de qué estamos hablando. */
+function resumenDePermisos(rol, r) {
+  var gob = rol.permisos.filter(function (p) { return r.gobierno.indexOf(p) >= 0; });
+  var porGrupo = r.catalogo.map(function (g) {
+    var n = g.permisos.filter(function (p) { return rol.permisos.indexOf(p[0]) >= 0; }).length;
+    return n ? txt(g.grupo) + ' <b>' + n + '</b>' : null;
+  }).filter(function (x) { return x; });
+
+  return '<div class="permisos-resumen">' + (porGrupo.join(' · ') || '—') + '</div>' +
+    (gob.length ? '<div class="marca-gobierno">administra el sistema</div>' : '');
+}
+
+function formRol(rol, r) {
+  var esNuevo = !rol;
+  var tiene = rol ? rol.permisos : [];
+
+  var cuerpo =
+    '<div class="fila">' +
+      '<div class="campo"><label for="rl-nombre">Nombre del rol</label>' +
+        '<input type="text" id="rl-nombre" style="width:100%" maxlength="40" value="' +
+        txt(rol ? rol.nombre : '') + '">' +
+        (esNuevo
+          ? '<div class="ayuda">El identificador se arma solo a partir del nombre y ' +
+            'después no se puede cambiar.</div>'
+          : '<div class="ayuda">Identificador: <code>' + txt(rol.id) + '</code>. ' +
+            'No cambia nunca: es lo que está anotado en cada usuario.</div>') +
+      '</div>' +
+      '<div class="campo"><label for="rl-desc">Para qué es</label>' +
+        '<input type="text" id="rl-desc" style="width:100%" maxlength="200" value="' +
+        txt(rol ? rol.descripcion : '') + '"></div>' +
+    '</div>' +
+    (rol && rol.usuarios
+      ? '<div class="caja aviso"><p>Este rol lo están usando <b>' + rol.usuarios +
+        '</b> usuario(s) activo(s). Lo que cambies acá les cambia lo que pueden hacer ' +
+        'la próxima vez que entren.</p></div>'
+      : '') +
+    r.catalogo.map(function (g) {
+      return '<div class="grupo-permisos">' +
+        '<div class="cab">' +
+          '<span class="rot">' + txt(g.grupo) + '</span>' +
+          '<button type="button" class="btn chico" data-grupo="' + txt(g.grupo) + '">Todos</button>' +
+        '</div>' +
+        g.permisos.map(function (p) {
+          var esGobierno = r.gobierno.indexOf(p[0]) >= 0;
+          return '<label class="permiso' + (esGobierno ? ' gobierno' : '') + '">' +
+            '<input type="checkbox" class="perm" value="' + txt(p[0]) + '"' +
+            (tiene.indexOf(p[0]) >= 0 ? ' checked' : '') + '>' +
+            '<span class="texto">' + txt(p[1]) +
+              (esGobierno ? '<span class="cuidado">administra el sistema</span>' : '') +
+            '</span></label>';
+        }).join('') +
+      '</div>';
+    }).join('');
+
+  var idem = nuevaIdem();
+  abrirModal({
+    titulo: esNuevo ? 'Crear un rol' : 'Editar ' + rol.nombre,
+    ancho: 640,
+    cuerpo: cuerpo,
+    textoAceptar: 'Guardar',
+    alAceptar: function () {
+      var nombre = valorModal('rl-nombre');
+      var permisos = [];
+      $$('.perm').forEach(function (c) { if (c.checked) permisos.push(c.value); });
+      if (!nombre) {
+        throw { codigo: 'CAMPOS_FALTANTES', mensaje: 'Ponele un nombre al rol.' };
+      }
+      if (!permisos.length) {
+        throw { codigo: 'SIN_PERMISOS',
+                mensaje: 'Marcá al menos un permiso: un rol sin permisos no sirve para nada.' };
+      }
+      var datos = { idem: idem, nombre: nombre, descripcion: valorModal('rl-desc'),
+                    permisos: permisos };
+      if (!esNuevo) { datos.rol_id = rol.id; datos.version = rol.version; }
+      return llamar(esNuevo ? 'config.rol.crear' : 'config.rol.guardar', datos)
+        .then(function () {
+          avisar(esNuevo ? 'Rol creado' : 'Permisos actualizados');
+          olvidarCache('config.roles.listar');
+          olvidarCache('config.usuarios.listar');
+          recargarConfig();
+        });
+    }
+  });
+
+  // "Todos" de un grupo. Si ya están todos marcados, desmarca: el mismo botón
+  // sirve para las dos cosas y no hay que buscar otro.
+  $$('.fondo-modal button[data-grupo]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var grupo = r.catalogo.filter(function (g) { return g.grupo === b.dataset.grupo; })[0];
+      if (!grupo) return;
+      var ids = grupo.permisos.map(function (p) { return p[0]; });
+      var cajas = [];
+      $$('.perm').forEach(function (c) { if (ids.indexOf(c.value) >= 0) cajas.push(c); });
+      var todas = cajas.every(function (c) { return c.checked; });
+      cajas.forEach(function (c) { c.checked = !todas; });
+    });
+  });
+}
+
+function bajaDeRol(rolId, r) {
+  var rol = r.roles.filter(function (x) { return x.id === rolId; })[0];
+  if (!rol) return;
+  abrirModal({
+    titulo: 'Dar de baja ' + rol.nombre,
+    cuerpo: '<p>El rol <b>' + txt(rol.nombre) + '</b> deja de estar disponible para asignar.</p>' +
+            '<div class="caja"><p><b>No se borra:</b> la fila queda en la planilla y se puede ' +
+            'volver a activar. Y no se puede dar de baja un rol que alguien esté usando: ' +
+            'el servidor lo rechaza.</p></div>',
+    textoAceptar: 'Dar de baja',
+    alAceptar: function () {
+      return llamar('config.rol.baja', { idem: nuevaIdem(), rol_id: rolId, version: rol.version })
+        .then(function () {
+          avisar('Rol dado de baja');
+          olvidarCache('config.roles.listar');
+          recargarConfig();
+        });
+    }
+  });
+}
+
 // ================================================================ usuarios
 
+// Los nombres de los roles ahora los pone el administrador y vienen del
+// servidor en roles_disponibles: [{id, nombre}]. Esta tabla queda solo como
+// respaldo para un rol que se nombre antes de que llegue la lista.
 var ETIQUETA_ROL = {
-  ADMINISTRADOR: 'Administrador', RECEPCION: 'Recepción',
+  ADMINISTRADOR: 'Administración', RECEPCION: 'Recepción',
   ENFERMERIA: 'Enfermería', MEDICO: 'Profesional'
 };
+function nombreRol(rol) {
+  if (rol && rol.nombre) return rol.nombre;
+  var id = (rol && rol.id) || rol;
+  return ETIQUETA_ROL[id] || id;
+}
+function idRol(rol) { return (rol && rol.id) || rol; }
 
 function pintarUsuarios(cont) {
   var gen = C.gen;
@@ -4828,7 +5060,7 @@ function pintarUsuarios(cont) {
         '<div class="tabla-cont"><table class="usuarios"><thead><tr>' +
         '<th>Correo</th><th>Nombre</th>' +
         r.roles_disponibles.map(function (rol) {
-          return '<th class="rol-col">' + txt(ETIQUETA_ROL[rol] || rol) + '</th>';
+          return '<th class="rol-col">' + txt(nombreRol(rol)) + '</th>';
         }).join('') +
         '<th>Profesional Asociado</th><th>Activo</th><th></th></tr></thead><tbody>' +
         us.map(function (u) {
@@ -4837,7 +5069,7 @@ function pintarUsuarios(cont) {
             '<td>' + txt(((u.nombre || '') + ' ' + (u.apellido || '')).trim()) + '</td>' +
             r.roles_disponibles.map(function (rol) {
               return '<td class="rol-col">' +
-                (u.roles.indexOf(rol) >= 0 ? '<b style="color:var(--acento)">&#10003;</b>'
+                (u.roles.indexOf(idRol(rol)) >= 0 ? '<b style="color:var(--acento)">&#10003;</b>'
                                            : '<span style="color:var(--faint)">&middot;</span>') +
                 '</td>';
             }).join('') +
@@ -4877,9 +5109,9 @@ function formUsuario(u, roles) {
     '<div class="campo"><label>Roles</label>' +
       roles.map(function (rol) {
         return '<label style="display:block;margin:4px 0;color:var(--ink)">' +
-          '<input type="checkbox" class="rol" value="' + txt(rol) + '"' +
-          (u && u.roles.indexOf(rol) >= 0 ? ' checked' : '') + '> ' +
-          txt(ETIQUETA_ROL[rol] || rol) + '</label>';
+          '<input type="checkbox" class="rol" value="' + txt(idRol(rol)) + '"' +
+          (u && u.roles.indexOf(idRol(rol)) >= 0 ? ' checked' : '') + '> ' +
+          txt(nombreRol(rol)) + '</label>';
       }).join('') +
       '<div class="ayuda">Al menos uno. Los permisos de todos los roles marcados se suman.</div>' +
     '</div>' +
