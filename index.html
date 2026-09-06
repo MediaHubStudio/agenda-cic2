@@ -485,6 +485,10 @@
      mitad de para lo que se abre una ficha cuando hay que avisar algo. */
   .accion.no{border-style:dashed;color:var(--faint);background:transparent;}
   .accion.no .v{font-weight:400;font-style:italic;}
+  /* Lo que todavia no llego. Distinto de "no hay": decir que alguien no tiene
+     telefono cuando no se pregunto todavia seria peor que hacer esperar. */
+  .accion.buscando{border-style:dotted;color:var(--muted);background:transparent;}
+  .accion.buscando .v{font-weight:400;font-style:italic;opacity:.75;}
   .rotulo-grupo{font-size:11px;letter-spacing:.07em;text-transform:uppercase;
                 color:var(--muted);font-weight:700;margin:16px 0 7px;}
 
@@ -803,7 +807,7 @@
 // transporte_web.html.
 var CLIENT_ID    = "873472275504-qia4rjcejadpagkgam7urn0bahq0n7ur.apps.googleusercontent.com";
 var URL_NUCLEO   = "https://script.google.com/macros/s/AKfycby-OWNY3iXvC4ssuWxHb_jogLtNbUtNlPX8bGY3IMu571aKJPFxKWoHUpE-0x4xy_kb/exec";
-var BUILD_PORTAL = "2026-09-06 16:51";
+var BUILD_PORTAL = "2026-09-06 17:41";
 var URL_PORTAL   = "";   // no aplica: esta pantalla no vive en Apps Script
 </script>
 
@@ -3736,7 +3740,13 @@ function pintarPacientes() {
 
   $('pac-cuerpo').innerHTML = html;
   $$('#pac-cuerpo button[data-pac]').forEach(function (b2) {
-    b2.addEventListener('click', function () { verPaciente(b2.dataset.pac); });
+    b2.addEventListener('click', function () {
+      // Se le pasa el renglón que la persona acaba de tocar: con eso la
+      // ventana abre al instante en vez de esperar el viaje.
+      verPaciente(b2.dataset.pac, filas.filter(function (p) {
+        return String(p.id) === String(b2.dataset.pac);
+      })[0]);
+    });
   });
   conectarPaginado();
 }
@@ -3816,11 +3826,57 @@ function conectarPaginado() {
 
 // ---------------------------------------------------------------- la ficha
 
-function verPaciente(id) {
-  avisar('Abriendo la ficha…');
+/**
+ * ================================================================
+ *  ABRIR LA FICHA NO PUEDE HACER ESPERAR POR LO QUE YA SE SABE
+ *
+ *  Traer una ficha cuesta un viaje al servidor, y en Apps Script un viaje son
+ *  uno o dos segundos que no se pueden bajar. Pero la lista de pacientes ya
+ *  tiene el nombre, el documento, la edad, la obra social y el teléfono: es
+ *  lo que se acaba de dibujar en el renglón que la persona tocó.
+ *
+ *  Así que la ventana se abre EN EL ACTO con eso, y lo que falta —domicilio,
+ *  correo, turnos— aparece cuando llega. Es la misma regla que la agenda:
+ *  nunca hacer esperar por algo que ya se tiene.
+ *
+ *  Lo que NO se hace es inventar: los datos que todavía no llegaron se
+ *  dibujan como "buscando…", nunca como "sin dato". Decir que alguien no
+ *  tiene teléfono cuando en realidad no se preguntó todavía sería peor que
+ *  hacer esperar.
+ * ================================================================
+ */
+var FICHA_GEN = 0;
+
+function verPaciente(id, previo) {
+  var gen = ++FICHA_GEN;
+  if (previo) pintarFicha(fichaProvisoria(previo), true);
+  else avisar('Abriendo la ficha…');
+
   llamar('paciente.ver', { paciente_id: id })
-    .then(function (r) { pintarFicha(r.paciente); })
-    .catch(function (err) { mostrarError(err, null); });
+    .then(function (r) {
+      if (gen !== FICHA_GEN) return;                    // se abrió otra ficha
+      // Si la cerró mientras llegaba, no se le vuelve a abrir en la cara.
+      if (previo && !document.querySelector('.fondo-modal')) return;
+      pintarFicha(r.paciente, false);
+    })
+    .catch(function (err) {
+      if (gen !== FICHA_GEN) return;
+      if (previo) cerrarModal();
+      mostrarError(err, null);
+    });
+}
+
+/** Lo que la lista ya sabe de esta persona. Nada más: lo que no está acá se
+ *  dibuja como "buscando…", no como vacío. */
+function fichaProvisoria(p) {
+  return {
+    id: p.id, apellido: p.apellido, nombre: p.nombre,
+    documento: p.documento, edad: p.edad,
+    obra_social: p.obra_social, activo: p.activo,
+    telefono: p.telefono, telefono_alt: p.telefono_alt,
+    sexo: '', fecha_nacimiento: '', domicilio: '', email: '',
+    ultimos_turnos: null
+  };
 }
 
 /**
@@ -3850,7 +3906,7 @@ function verPaciente(id) {
  *  Lo que NO hay acá es cualquier cosa clínica, y no la va a haber.
  * ================================================================
  */
-function pintarFicha(p) {
+function pintarFicha(p, provisoria) {
   var html = '';
 
   // La franja con quién es. El nombre va acá y no solo en el título de la
@@ -3868,15 +3924,17 @@ function pintarFicha(p) {
   }
 
   // ---- contacto: para lo que de verdad se abre esta ventana ----
+  // El teléfono viene en la lista, así que ya se puede llamar antes de que
+  // llegue la ficha. El domicilio y el correo no: esos esperan.
   html += '<div class="acciones-contacto">' +
     botonContacto('&#128222;', 'Teléfono', p.telefono,
                   p.telefono ? 'tel:' + soloDiscables(p.telefono) : '',
                   p.telefono_alt) +
     botonContacto('&#128205;', 'Domicilio', p.domicilio,
                   p.domicilio ? urlMapa(p.domicilio) : '', '',
-                  'Buscarlo en Google Maps (se abre en una pestaña nueva)') +
+                  'Buscarlo en Google Maps (se abre en una pestaña nueva)', provisoria) +
     botonContacto('&#9993;', 'Correo', p.email,
-                  p.email ? 'mailto:' + p.email : '') +
+                  p.email ? 'mailto:' + p.email : '', '', '', provisoria) +
     '</div>';
 
   if (p.observaciones_adm) {
@@ -3894,7 +3952,9 @@ function pintarFicha(p) {
   // Sin la marca hay que comparar cada fecha con el calendario mentalmente.
   var hoy = S.sesion.hoy || hoyLocal();
   html += '<p class="rotulo-grupo">Turnos</p>';
-  if (p.ultimos_turnos && p.ultimos_turnos.length) {
+  if (provisoria) {
+    html += '<div class="cargando">Buscando los turnos…</div>';
+  } else if (p.ultimos_turnos && p.ultimos_turnos.length) {
     html += '<div class="tabla-cont"><table><thead><tr><th>Fecha</th><th>Hora</th>' +
       '<th>Profesional</th><th>Estado</th></tr></thead><tbody>' +
       p.ultimos_turnos.map(function (t) {
@@ -3919,8 +3979,11 @@ function pintarFicha(p) {
     titulo: 'Ficha del paciente',
     ancho: 680,
     cuerpo: html,
-    textoAceptar: puede('paciente.editar') ? 'Editar' : null,
-    alAceptar: puede('paciente.editar') ? function () { formPacienteEditar(p); return false; } : null
+    // Editar necesita la ficha completa: sin la versión, guardar chocaría
+    // contra el control de concurrencia. Aparece cuando termina de llegar.
+    textoAceptar: (!provisoria && puede('paciente.editar')) ? 'Editar' : null,
+    alAceptar: (!provisoria && puede('paciente.editar'))
+      ? function () { formPacienteEditar(p); return false; } : null
   });
 }
 
@@ -3955,7 +4018,12 @@ function lineaIdentidad(p) {
  * de un vistazo QUÉ FALTA, que es la mitad de para lo que se abre una ficha
  * cuando hay que avisarle a alguien que el profesional no viene.
  */
-function botonContacto(icono, rotulo, valor, destino, secundario, ayuda) {
+function botonContacto(icono, rotulo, valor, destino, secundario, ayuda, buscando) {
+  if (!valor && buscando) {
+    return '<span class="accion buscando"><span class="ico">' + icono + '</span>' +
+      '<span class="txt"><span class="k">' + txt(rotulo) + '</span>' +
+      '<span class="v">buscando…</span></span></span>';
+  }
   if (!valor) {
     return '<span class="accion no"><span class="ico">' + icono + '</span>' +
       '<span class="txt"><span class="k">' + txt(rotulo) + '</span>' +
@@ -4097,7 +4165,7 @@ var SECCIONES_CONFIG = [
   { id:'especialidades',etiqueta:'Especialidades',permiso:'config.catalogos',pintar:function(c){pintarCatalogo(c,'ESPECIALIDADES');} },
   { id:'consultorios',  etiqueta:'Consultorios', permiso:'config.catalogos', pintar:function(c){pintarCatalogo(c,'CONSULTORIOS');} },
   { id:'tipos',         etiqueta:'Tipos de consulta',permiso:'config.catalogos',pintar:function(c){pintarCatalogo(c,'TIPOS_CONSULTA');} },
-  { id:'usuarios',      etiqueta:'Usuarios y roles',permiso:'config.usuarios',pintar:pintarUsuarios },
+  { id:'usuarios',      etiqueta:'Usuarios',       permiso:'config.usuarios',pintar:pintarUsuarios },
   { id:'roles',         etiqueta:'Roles y permisos',permiso:'config.roles',   pintar:pintarRoles },
   { id:'feriados',      etiqueta:'Feriados',       permiso:'config.catalogos',pintar:pintarFeriados },
   { id:'velocidad',     etiqueta:'Velocidad',      permiso:'config.sistema',  pintar:pintarVelocidad }
@@ -4210,6 +4278,10 @@ function guardarConfigCompleta(r) {
     guardarEnCache('config.usuarios.listar', {},
                    { usuarios: r.usuarios, roles_disponibles: r.roles_disponibles });
   }
+  // Los roles venían aparte y abrir la solapa costaba un viaje entero de
+  // segundo y medio. Ahora llegan con todo lo demás mientras se mira la
+  // agenda, así que la solapa se dibuja al instante.
+  if (r.roles) guardarEnCache('config.roles.listar', {}, r.roles);
 }
 
 // ================================================================ feriados
@@ -5119,6 +5191,13 @@ function resumenDePermisos(rol, r) {
     (gob.length ? '<div class="marca-gobierno">administra el sistema</div>' : '');
 }
 
+/** Igual que con los usuarios: la respuesta ya trae la lista. */
+function guardarListaRoles(r) {
+  if (!r || !r.roles) return;
+  guardarEnCache('config.roles.listar', {},
+                 { catalogo: r.catalogo, gobierno: r.gobierno, roles: r.roles });
+}
+
 function formRol(rol, r) {
   var esNuevo = !rol;
   var tiene = rol ? rol.permisos : [];
@@ -5182,9 +5261,11 @@ function formRol(rol, r) {
                     permisos: permisos };
       if (!esNuevo) { datos.rol_id = rol.id; datos.version = rol.version; }
       return llamar(esNuevo ? 'config.rol.crear' : 'config.rol.guardar', datos)
-        .then(function () {
+        .then(function (r) {
           avisar(esNuevo ? 'Rol creado' : 'Permisos actualizados');
-          olvidarCache('config.roles.listar');
+          guardarListaRoles(r);
+          // Los permisos cambiaron: la lista de usuarios muestra roles, así
+          // que esa sí hay que volver a pedirla.
           olvidarCache('config.usuarios.listar');
           recargarConfig();
         });
@@ -5218,9 +5299,9 @@ function bajaDeRol(rolId, r) {
     textoAceptar: 'Dar de baja',
     alAceptar: function () {
       return llamar('config.rol.baja', { idem: nuevaIdem(), rol_id: rolId, version: rol.version })
-        .then(function () {
+        .then(function (r) {
           avisar('Rol dado de baja');
-          olvidarCache('config.roles.listar');
+          guardarListaRoles(r);
           recargarConfig();
         });
     }
@@ -5246,12 +5327,17 @@ function idRol(rol) { return (rol && rol.id) || rol; }
 function pintarUsuarios(cont) {
   var gen = C.gen;
   cont.innerHTML = '<div class="cargando">Cargando…</div>';
-  llamarCacheado('config.usuarios.listar', {}).then(function (r) {
+  var pedido = C.verEliminados ? { eliminados: true } : {};
+  llamarCacheado('config.usuarios.listar', pedido).then(function (r) {
     if (!vigente(gen)) return;
     var us = r.usuarios;
     cont.innerHTML =
-      '<section class="bloque ancha"><h2>Usuarios y roles' +
-        '<span class="der"><button class="btn principal chico" id="usr-nuevo">Agregar usuario</button></span></h2>' +
+      '<section class="bloque ancha"><h2>Usuarios' +
+        '<span class="der">' +
+          '<label class="en-linea"><input type="checkbox" id="usr-eliminados"' +
+            (C.verEliminados ? ' checked' : '') + '> Ver también los eliminados</label> ' +
+          '<button class="btn principal chico" id="usr-nuevo">Agregar usuario</button>' +
+        '</span></h2>' +
         '<div class="caja"><p>Un usuario puede tener <b>varios roles a la vez</b>. Los permisos ' +
         'se suman: quien es Profesional y Administrador ve todas las agendas, y además tiene la ' +
         'suya en la pantalla de inicio.</p>' +
@@ -5278,13 +5364,7 @@ function pintarUsuarios(cont) {
             '<td>' + txt(u.medico_id ? nombreMedico(u.medico_id) : '') + '</td>' +
             '<td><span class="pill ' + (u.activo ? 'si' : 'no') + '">' +
               (u.activo ? 'Sí' : 'No') + '</span></td>' +
-            '<td class="acciones"><button class="btn chico" data-id="' + txt(u.id) + '">Editar</button>' +
-              (u.usuario
-                ? ' <button class="btn chico" data-clave="' + txt(u.id) + '">Contraseña</button>' : '') +
-              (u.bloqueado
-                ? ' <button class="btn chico peligro" data-desbloq="' + txt(u.id) +
-                  '">Desbloquear</button>' : '') +
-            '</td></tr>';
+            '<td class="acciones">' + accionesDeUsuario(u) + '</td></tr>';
         }).join('') + '</tbody></table></div></section>';
 
     $('usr-nuevo').addEventListener('click', function () { formUsuario(null, r.roles_disponibles); });
@@ -5301,10 +5381,131 @@ function pintarUsuarios(cont) {
     $$('#cfg-cuerpo button[data-desbloq]').forEach(function (b) {
       b.addEventListener('click', function () { desbloquearUsuario(b.dataset.desbloq); });
     });
+    $$('#cfg-cuerpo button[data-bloq]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        bloquearUsuario(us.filter(function (u) { return u.id === b.dataset.bloq; })[0],
+                        b.dataset.accion === 'bloquear');
+      });
+    });
+    $$('#cfg-cuerpo button[data-elim]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        eliminarUsuario(us.filter(function (u) { return u.id === b.dataset.elim; })[0]);
+      });
+    });
+    $$('#cfg-cuerpo button[data-restaurar]').forEach(function (b) {
+      b.addEventListener('click', function () { restaurarUsuario(b.dataset.restaurar); });
+    });
+    $('usr-eliminados').addEventListener('change', function () {
+      C.verEliminados = this.checked;
+      recargarConfig();
+    });
   }).catch(function (err) {
     if (!vigente(gen)) return;
     mostrarError(err, cont, function () { recargarConfig(); });
   });
+}
+
+/**
+ * Los botones de cada fila.
+ *
+ * Bloquear y eliminar son cosas distintas y se ven distintas: bloquear es
+ * temporal y reversible con un clic, eliminar es definitivo y pide
+ * confirmación. Un usuario eliminado no ofrece ninguna de las dos: solo
+ * volver a ponerlo en la lista.
+ */
+function accionesDeUsuario(u) {
+  if (u.eliminado) {
+    return '<button class="btn chico" data-restaurar="' + txt(u.id) + '">Restaurar</button>';
+  }
+  return '<button class="btn chico" data-id="' + txt(u.id) + '">Editar</button>' +
+    (u.usuario ? ' <button class="btn chico" data-clave="' + txt(u.id) +
+                 '">Contraseña</button>' : '') +
+    (u.bloqueado ? ' <button class="btn chico" data-desbloq="' + txt(u.id) +
+                   '" title="Levantar el bloqueo por intentos fallidos">Destrabar</button>' : '') +
+    (u.activo
+      ? ' <button class="btn chico" data-bloq="' + txt(u.id) + '" data-accion="bloquear" ' +
+        'title="Cortarle el acceso sin borrar nada">Bloquear</button>'
+      : ' <button class="btn chico" data-bloq="' + txt(u.id) + '" data-accion="desbloquear" ' +
+        'title="Devolverle el acceso">Dar acceso</button>') +
+    ' <button class="btn chico peligro" data-elim="' + txt(u.id) + '">Eliminar</button>';
+}
+
+function nombreDeUsuario(u) {
+  return ((u.nombre || '') + ' ' + (u.apellido || '')).trim() ||
+         u.usuario || u.email || 'ese usuario';
+}
+
+/**
+ * Bloquear: cortarle el acceso sin tocar nada más.
+ *
+ * No pide confirmación al bloquear porque se deshace con el botón de al lado,
+ * y porque a veces hay que cortar un acceso YA. Lo que sí hace es decir qué
+ * significa, porque "bloquear" y "eliminar" se confunden.
+ */
+function bloquearUsuario(u, bloquear) {
+  if (!u) return;
+  llamar('config.usuario.bloquear',
+         { idem: nuevaIdem(), usuario_id: u.id, bloquear: bloquear, version: u.version })
+    .then(function (r) {
+      avisar(bloquear ? nombreDeUsuario(u) + ' ya no puede entrar'
+                      : nombreDeUsuario(u) + ' puede entrar de nuevo');
+      guardarListaUsuarios(r);
+      recargarConfig();
+    })
+    .catch(function (err) { mostrarError(err, null); });
+}
+
+/**
+ * Eliminar. Lo que hace y lo que NO hace está escrito en el diálogo, porque
+ * es la diferencia entre creer que se borró un rastro y que no.
+ */
+function eliminarUsuario(u) {
+  if (!u) return;
+  abrirModal({
+    titulo: 'Eliminar a ' + nombreDeUsuario(u),
+    ancho: 480,
+    cuerpo:
+      '<p>No va a poder entrar nunca más y desaparece de la lista. ' +
+      'Su contraseña deja de servir en el acto y su nombre de usuario queda ' +
+      'libre para otra persona.</p>' +
+      '<div class="caja"><p><b>La fila no se borra de la planilla</b>, y no es un ' +
+      'descuido: cada turno que cargó guarda quién lo cargó, y cada cosa que tocó ' +
+      'está en la auditoría. Borrarla dejaría todo eso apuntando a un nombre que ' +
+      'ya no existe.</p>' +
+      '<p class="ayuda">Se puede volver a ver con «Ver también los eliminados», y ' +
+      'restaurar.</p></div>',
+    textoAceptar: 'Eliminar',
+    alAceptar: function () {
+      return llamar('config.usuario.eliminar',
+                    { idem: nuevaIdem(), usuario_id: u.id, version: u.version })
+        .then(function (r) {
+          avisar(nombreDeUsuario(u) + ' fue eliminado');
+          guardarListaUsuarios(r);
+          recargarConfig();
+        });
+    }
+  });
+}
+
+function restaurarUsuario(id) {
+  llamar('config.usuario.restaurar', { idem: nuevaIdem(), usuario_id: id })
+    .then(function (r) {
+      avisar('Restaurado. Ponele con qué va a entrar: correo, o usuario y contraseña.');
+      guardarListaUsuarios(r);
+      recargarConfig();
+    })
+    .catch(function (err) { mostrarError(err, null); });
+}
+
+/**
+ * La respuesta de un guardado ya trae la lista actualizada. Guardarla evita
+ * el segundo viaje —otro segundo y medio— que costaba volver a pedirla.
+ */
+function guardarListaUsuarios(r) {
+  if (!r || !r.usuarios) return;
+  var pedido = C.verEliminados ? { eliminados: true } : {};
+  guardarEnCache('config.usuarios.listar', pedido,
+                 { usuarios: r.usuarios, roles_disponibles: r.roles_disponibles });
 }
 
 /** Con qué puede entrar esta persona. Las dos cosas si tiene las dos. */
@@ -5337,9 +5538,9 @@ function formReponerClave(u) {
     alAceptar: function () {
       return llamar('config.clave.reponer', {
         idem: idem, usuario_id: u.id, clave_nueva: valorModal('rc-clave')
-      }).then(function () {
+      }).then(function (r) {
         avisar('Contraseña puesta. La persona la va a cambiar al entrar.');
-        olvidarCache('config.usuarios.listar');
+        guardarListaUsuarios(r);
         recargarConfig();
       });
     }
@@ -5348,9 +5549,9 @@ function formReponerClave(u) {
 
 function desbloquearUsuario(id) {
   llamar('config.usuario.desbloquear', { idem: nuevaIdem(), usuario_id: id })
-    .then(function () {
-      avisar('Desbloqueado');
-      olvidarCache('config.usuarios.listar');
+    .then(function (r) {
+      avisar('Destrabado');
+      guardarListaUsuarios(r);
       recargarConfig();
     })
     .catch(function (err) { mostrarError(err, null); });
