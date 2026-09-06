@@ -29,20 +29,56 @@
     --mono:"Cascadia Mono","SF Mono",Consolas,"Liberation Mono",monospace;
     --sombra:0 1px 2px rgba(16,34,43,.06), 0 14px 30px -22px rgba(16,34,43,.45);
   }
+  /* ================================================================
+     CLARO, OSCURO, O LO QUE DIGA LA COMPUTADORA
+
+     Tres estados, no dos, y el del medio es el que se olvida:
+
+       · Sin elegir nada    -> manda el sistema operativo. Es lo que habia
+         antes y sigue siendo lo que pasa por omision.
+       · data-tema="claro"  -> claro siempre, aunque el sistema este oscuro.
+       · data-tema="oscuro" -> oscuro siempre, aunque el sistema este claro.
+
+     Por eso la regla de abajo lleva :not([data-tema="claro"]): sin eso,
+     quien elige claro en una computadora configurada en oscuro no podria
+     salir nunca del oscuro, y el selector pareceria roto.
+
+     Los valores oscuros estan escritos DOS veces y no hay forma de evitarlo
+     en CSS: una misma regla no se puede reusar adentro y afuera de un
+     @media. Que no se separen lo cuida una prueba, que compara los dos
+     bloques y falla si difieren en una sola letra.
+
+     Sin anidar a proposito: el anidado de CSS es reciente y la computadora
+     del mostrador puede tener un navegador viejo.
+     ================================================================ */
   @media (prefers-color-scheme:dark){
-    :root{
-      --acento:#62BEDD; --acento-ink:#96D8EF; --acento-suave:#10333F;
-      --cielo:#7FCFE8;
-      --paper:#0C1418; --surface:#131E24; --surface-2:#1A272F;
-      --ink:#E4EDF1; --muted:#93A9B4; --faint:#6E8590;
-      --rule:#253339; --rule-fuerte:#35474F;
-      --ok:#63B981; --ok-suave:#152B20;
-      --aviso:#D5A052; --aviso-suave:#2C2415;
-      --alerta:#E8918A; --alerta-suave:#331B19;
-      --sobre-acento:#08161C;
-      --sombra:0 1px 2px rgba(0,0,0,.5), 0 14px 30px -22px rgba(0,0,0,.9);
+    :root:not([data-tema="claro"]){
+    --acento:#62BEDD; --acento-ink:#96D8EF; --acento-suave:#10333F;
+    --cielo:#7FCFE8;
+    --paper:#0C1418; --surface:#131E24; --surface-2:#1A272F;
+    --ink:#E4EDF1; --muted:#93A9B4; --faint:#6E8590;
+    --rule:#253339; --rule-fuerte:#35474F;
+    --ok:#63B981; --ok-suave:#152B20;
+    --aviso:#D5A052; --aviso-suave:#2C2415;
+    --alerta:#E8918A; --alerta-suave:#331B19;
+    --sobre-acento:#08161C;
+    --sombra:0 1px 2px rgba(0,0,0,.5), 0 14px 30px -22px rgba(0,0,0,.9);
     }
   }
+  :root[data-tema="oscuro"]{
+    --acento:#62BEDD; --acento-ink:#96D8EF; --acento-suave:#10333F;
+    --cielo:#7FCFE8;
+    --paper:#0C1418; --surface:#131E24; --surface-2:#1A272F;
+    --ink:#E4EDF1; --muted:#93A9B4; --faint:#6E8590;
+    --rule:#253339; --rule-fuerte:#35474F;
+    --ok:#63B981; --ok-suave:#152B20;
+    --aviso:#D5A052; --aviso-suave:#2C2415;
+    --alerta:#E8918A; --alerta-suave:#331B19;
+    --sobre-acento:#08161C;
+    --sombra:0 1px 2px rgba(0,0,0,.5), 0 14px 30px -22px rgba(0,0,0,.9);
+  }
+
+
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;}
@@ -89,6 +125,13 @@
                       background:var(--acento);color:var(--sobre-acento);
                       display:grid;place-items:center;font-size:12px;font-weight:700;}
   .quien-soy .nom{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  /* El selector de tema. El simbolo va siempre; la palabra se cae en pantalla
+     angosta, donde la cabecera ya pelea por el lugar. El globo de ayuda y el
+     aria-label dicen que hace, asi que sin la palabra no se pierde nada. */
+  #tema{display:inline-flex;align-items:center;gap:6px;}
+  #tema .ico{font-size:14px;line-height:1;}
+  @media (max-width:820px){ #tema .rot{display:none;} }
 
   /* ---------------- controles ---------------- */
   /* ================================================================
@@ -353,7 +396,13 @@
   .medidor.q3 i{background:#C08A2E;}          /* 70-89 % */
   .medidor.q4 i{background:var(--aviso);}     /* 90-99 % */
   .medidor.q5 i{background:var(--alerta);}    /* 100 % */
-  @media (prefers-color-scheme:dark){ .medidor.q3 i{background:#C9973F;} }
+  /* El ocre del 70-89 % pide un tono mas claro sobre fondo oscuro. Va con los
+     mismos tres estados que la paleta, o al elegir el tema a mano quedaria
+     con el color del otro. */
+  @media (prefers-color-scheme:dark){
+    :root:not([data-tema="claro"]) .medidor.q3 i{background:#C9973F;}
+  }
+  :root[data-tema="oscuro"] .medidor.q3 i{background:#C9973F;}
   .completo{color:var(--alerta);font-weight:700;letter-spacing:.03em;}
   .dia-semana ul,.col-medico ul{list-style:none;margin:0;padding:0;}
   .dia-semana li,.col-medico li{font-size:12.5px;padding:3px 0;
@@ -824,6 +873,29 @@
   @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important;}}
 </style>
 
+<script>
+// ================================================================
+//  EL TEMA, ANTES DE DIBUJAR NADA
+//
+//  Esto va en la cabecera del documento y no con el resto del JavaScript
+//  por un solo motivo: si se aplicara despues, quien eligio modo oscuro
+//  veria un destello blanco en cada carga. Son doscientos milisegundos de
+//  pantalla equivocada, y en un turno de noche se notan.
+//
+//  Es la unica cosa del sistema que corre antes que la pantalla exista, asi
+//  que es corta a proposito y no depende de nada.
+// ================================================================
+(function () {
+  try {
+    var t = localStorage.getItem('cic-agenda:tema');
+    // Solo dos valores validos. Sin marca, manda el sistema operativo, que
+    // es lo que hacia el sistema antes de que esto existiera.
+    if (t === 'claro' || t === 'oscuro') {
+      document.documentElement.setAttribute('data-tema', t);
+    }
+  } catch (e) { /* modo privado o sin permiso: queda el del sistema */ }
+})();
+</script>
 <title>Agenda de Turnos · CIC 2</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#15607F">
@@ -864,6 +936,7 @@
          número, es saber si lo que se acaba de tocar ya se guardó. Los tiempos
          y la versión se fueron a Configuración › Velocidad. -->
     <span class="build" id="pendientes" title="Operaciones en camino al servidor"></span>
+    <button class="btn chico sin-imprimir" id="tema"><span class="ico" aria-hidden="true"></span><span class="rot"></span></button>
     <button class="btn chico sin-imprimir oculto" id="mi-clave"
             title="Cambiar mi contraseña">Contraseña</button>
     <button class="btn chico sin-imprimir" id="cuenta"
@@ -878,7 +951,7 @@
 // transporte_web.html.
 var CLIENT_ID    = "873472275504-qia4rjcejadpagkgam7urn0bahq0n7ur.apps.googleusercontent.com";
 var URL_NUCLEO   = "https://script.google.com/macros/s/AKfycby-OWNY3iXvC4ssuWxHb_jogLtNbUtNlPX8bGY3IMu571aKJPFxKWoHUpE-0x4xy_kb/exec";
-var BUILD_PORTAL = "2026-09-06 17:53";
+var BUILD_PORTAL = "2026-09-06 18:47";
 var URL_PORTAL   = "";   // no aplica: esta pantalla no vive en Apps Script
 </script>
 
@@ -6815,6 +6888,66 @@ function pedirCambioDeClave(opcional) {
     }
   });
 }
+
+/**
+ * ================================================================
+ *  CLARO, OSCURO, O EL DE LA COMPUTADORA
+ *
+ *  Tres estados y el boton los recorre en ese orden. El TERCERO es el que
+ *  suele faltar en estas cosas: una vez que elegiste claro a mano, no hay
+ *  forma de volver a "que decida la computadora" salvo borrar datos del
+ *  navegador. Acá se vuelve con un clic mas.
+ *
+ *  Se guarda en el navegador y no en el usuario a proposito: es una
+ *  preferencia de ESTA pantalla, no de la persona. La computadora del
+ *  mostrador la usan varios y con distinta luz segun la hora; que el tema
+ *  viaje con el usuario a otra maquina no le sirve a nadie.
+ * ================================================================
+ */
+var TEMAS = [
+  { id: '',       ico: '\u25D0', rot: 'Automático',
+    ayuda: 'Sigue lo que tenga configurado la computadora. Tocá para elegir a mano.' },
+  { id: 'claro',  ico: '\u2600', rot: 'Claro',
+    ayuda: 'Siempre claro, aunque la computadora esté en oscuro. Tocá para pasar a oscuro.' },
+  { id: 'oscuro', ico: '\u263E', rot: 'Oscuro',
+    ayuda: 'Siempre oscuro, aunque la computadora esté en claro. Tocá para volver al automático.' }
+];
+
+function temaGuardado() {
+  try { return localStorage.getItem('cic-agenda:tema') || ''; } catch (e) { return ''; }
+}
+
+function aplicarTema(id) {
+  var r = document.documentElement;
+  if (id) r.setAttribute('data-tema', id);
+  else r.removeAttribute('data-tema');
+  try {
+    if (id) localStorage.setItem('cic-agenda:tema', id);
+    else localStorage.removeItem('cic-agenda:tema');
+  } catch (e) { /* sin poder guardar: vale para esta pestaña y listo */ }
+  dibujarBotonTema();
+}
+
+function dibujarBotonTema() {
+  var b = $('tema');
+  if (!b) return;
+  var actual = temaGuardado();
+  var t = TEMAS.filter(function (x) { return x.id === actual; })[0] || TEMAS[0];
+  b.querySelector('.ico').textContent = t.ico;
+  b.querySelector('.rot').textContent = t.rot;
+  b.title = t.ayuda;
+  // El texto para quien no ve el boton: el globo de ayuda no lo lee nadie
+  // con un lector de pantalla.
+  b.setAttribute('aria-label', 'Tema de la pantalla: ' + t.rot + '. ' + t.ayuda);
+}
+
+$('tema').addEventListener('click', function () {
+  var actual = temaGuardado();
+  var i = 0;
+  TEMAS.forEach(function (t, n) { if (t.id === actual) i = n; });
+  aplicarTema(TEMAS[(i + 1) % TEMAS.length].id);
+});
+dibujarBotonTema();
 
 $('salir').addEventListener('click', salirDelSistema);
 $('mi-clave').addEventListener('click', function () { pedirCambioDeClave(true); });
