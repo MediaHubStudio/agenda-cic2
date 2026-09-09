@@ -25,6 +25,12 @@
        texto blanco; en oscuro es claro y pide texto oscuro. Un #fff fijo
        desaparecía en modo oscuro. */
     --sobre-acento:#FFFFFF;
+    /* Los ocho colores de los graficos. Se eligieron para distinguirse entre
+       si tambien en una impresion en escala de grises y para quien no separa
+       bien rojo de verde: el orden alterna claro y oscuro, asi dos barras
+       vecinas nunca quedan del mismo gris. */
+    --g1:#15607F; --g2:#E08A2E; --g3:#3E9B6E; --g4:#8A5BC4;
+    --g5:#C4515C; --g6:#4FA8C9; --g7:#8A7A2E; --g8:#5C7385;
     --sans:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",sans-serif;
     --mono:"Cascadia Mono","SF Mono",Consolas,"Liberation Mono",monospace;
     --sombra:0 1px 2px rgba(16,34,43,.06), 0 14px 30px -22px rgba(16,34,43,.45);
@@ -62,6 +68,8 @@
     --aviso:#D5A052; --aviso-suave:#2C2415;
     --alerta:#E8918A; --alerta-suave:#331B19;
     --sobre-acento:#08161C;
+    --g1:#62BEDD; --g2:#F0A85A; --g3:#6DC495; --g4:#B392E4;
+    --g5:#E88A94; --g6:#A0DCEF; --g7:#C9B968; --g8:#9BB0BE;
     --sombra:0 1px 2px rgba(0,0,0,.5), 0 14px 30px -22px rgba(0,0,0,.9);
     }
   }
@@ -75,6 +83,8 @@
     --aviso:#D5A052; --aviso-suave:#2C2415;
     --alerta:#E8918A; --alerta-suave:#331B19;
     --sobre-acento:#08161C;
+    --g1:#62BEDD; --g2:#F0A85A; --g3:#6DC495; --g4:#B392E4;
+    --g5:#E88A94; --g6:#A0DCEF; --g7:#C9B968; --g8:#9BB0BE;
     --sombra:0 1px 2px rgba(0,0,0,.5), 0 14px 30px -22px rgba(0,0,0,.9);
   }
 
@@ -162,6 +172,14 @@
   label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:3px;}
   .campo{margin-bottom:12px;}
   .campo .ayuda{font-size:12px;color:var(--faint);margin-top:3px;}
+  /* El asterisco de obligatorio. Va en color de alerta pero sin negrita: tiene
+     que verse al recorrer el formulario, no gritar en cada etiqueta. */
+  .obligatorio{color:var(--alerta);margin-left:1px;}
+  /* Se marca el campo que faltó al intentar guardar. El borde solo no alcanza
+     —con luz de sol o daltonismo un borde rojo y uno gris se parecen—, así que
+     además el mensaje del aviso nombra el campo y el foco se va al primero. */
+  input.falta,select.falta{border-color:var(--alerta);
+                           box-shadow:0 0 0 2px color-mix(in srgb,var(--alerta) 22%,transparent);}
   .fila{display:flex;gap:12px;flex-wrap:wrap;}
   .fila > *{flex:1 1 150px;min-width:0;}
 
@@ -183,6 +201,17 @@
         text-decoration:none;color:inherit;}
   a.btn.principal{color:var(--sobre-acento);}
   .nav-fechas{display:flex;}
+  /* La vista elegida —día, semana, tablero— tiene que verse elegida. El
+     botón ya decía aria-current="page" para el lector de pantalla, pero a la
+     vista los tres quedaban iguales y no había forma de saber dónde se
+     estaba parado sin mirar el contenido. */
+  .nav-fechas.modos .btn[aria-current="page"]{
+    background:var(--acento);border-color:var(--acento);
+    color:var(--sobre-acento);font-weight:600;
+  }
+  .nav-fechas.modos .btn[aria-current="page"]:hover{
+    background:var(--acento-ink);border-color:var(--acento-ink);
+  }
   .nav-fechas .btn{border-radius:0;margin-left:-1px;}
   .nav-fechas .btn:first-child{border-radius:4px 0 0 4px;margin-left:0;}
   .nav-fechas .btn:last-child{border-radius:0 4px 4px 0;}
@@ -203,6 +232,11 @@
   .fecha-grande{margin:0;font-size:22px;line-height:1.15;font-weight:720;
                 color:var(--acento);letter-spacing:-.015em;
                 font-variant-numeric:tabular-nums;}
+  /* "miércoles 9 de septiembre" empieza en minúscula porque los nombres de
+     los días se escriben así en castellano. Como acá arranca una oración
+     —es el título de la pantalla— va con mayúscula, y se hace en el estilo
+     para no ensuciar la función que arma la fecha, que se usa en más lados. */
+  .fecha-grande::first-letter{text-transform:uppercase;}
   .encabezado.dia h1{margin:3px 0 0;font-size:18px;}
   .encabezado.dia .subtitulo{margin-top:1px;}
   @media (max-width:560px){ .fecha-grande{font-size:19px;} }
@@ -372,6 +406,15 @@
   .chip:focus-visible{outline:2px solid var(--acento);outline-offset:2px;}
   .chip.apagado{color:var(--faint);font-weight:500;}
   .chip.apagado .quien{text-decoration:line-through;}
+  /* La misma pastilla, pero con una casilla de verdad adentro en vez del
+     cuadradito dibujado. Se usa donde el estado lo lleva un <input> y no un
+     aria-pressed. El resaltado con :has() es un agregado: si el navegador es
+     viejo y no lo entiende, la casilla marcada se ve igual y no se pierde
+     nada, que es la unica forma en la que vale la pena usar algo reciente. */
+  .chip input[type="checkbox"]{width:14px;height:14px;margin:0;flex:none;
+                               accent-color:var(--acento);cursor:pointer;}
+  .chip:has(input:checked){border-color:var(--acento);background:var(--acento-suave);
+                           color:var(--acento-ink);}
   /* Ficha del paciente: rotulo a la izquierda, dato a la derecha. */
   td.rotulo-dato{color:var(--muted);font-size:13px;width:34%;white-space:nowrap;}
   td.dato .ayuda{display:block;font-size:11.5px;color:var(--faint);}
@@ -485,6 +528,14 @@
      ================================================================ */
   .tabla-scroll{max-height:62vh;overflow:auto;}
   .tabla-scroll thead th{position:sticky;top:0;z-index:2;}
+  /* La lista de resultados del buscador de pacientes: seis renglones y el
+     resto con scroll propio.
+     Buscar "fer" en un padrón grande devolvía veinte filas y la ventana de
+     Dar turno crecía hasta tapar la pantalla: el botón Aceptar quedaba abajo
+     de todo y había que scrollear el diálogo entero para llegar. Con la lista
+     acotada, la ventana no cambia de alto según lo que se escriba.
+     36px por fila (8+8 de padding y la línea) más el encabezado pegado. */
+  .tabla-6{max-height:calc(36px * 6 + 32px);}
   td .tel-alt{display:block;color:var(--muted);font-size:11.5px;}
   /* El paginado: cuantos se ven, cuales se ven y como pasar de pagina. */
   .paginado{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
@@ -689,6 +740,72 @@
           color:var(--faint);font-size:12px;text-transform:uppercase;
           letter-spacing:.08em;}
   .o-bien::before,.o-bien::after{content:"";flex:1;height:1px;background:var(--rule);}
+
+  /* ---------------- estadisticas y graficos ----------------
+
+     TODO DIBUJADO CON HTML Y CSS, sin ninguna libreria de graficos.
+
+     No es purismo: una libreria de graficos se baja de internet cada vez que
+     se abre la pantalla. El dia que ese servidor no conteste —o que la
+     conexion del centro este mal— la pantalla queda a medias, y nadie va a
+     entender por que. Barras y columnas son cajas con un ancho o un alto; la
+     rosca es un circulo con el borde punteado. Eso anda siempre y sigue el
+     tema claro/oscuro sin hacer nada.
+
+     Y una regla que atraviesa todo esto: el color NUNCA informa solo. Cada
+     barra lleva su numero escrito al lado. Con sol en la pantalla, en una
+     impresion en blanco y negro o para quien no distingue bien los tonos,
+     el color es decoracion y el numero es el dato. */
+
+  .tarjetas{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+  .tarjeta{flex:1 1 150px;background:var(--surface);border:1px solid var(--rule);
+           border-radius:6px;padding:11px 13px;min-width:0;}
+  .tarjeta .n{display:block;font-size:26px;font-weight:720;line-height:1.05;
+              color:var(--acento);font-variant-numeric:tabular-nums;}
+  .tarjeta .r{display:block;font-size:12px;color:var(--muted);margin-top:2px;}
+  .tarjeta .ay{display:block;font-size:11px;color:var(--faint);margin-top:2px;}
+
+  .graficos{display:flex;flex-wrap:wrap;gap:14px;}
+  .grafico{flex:1 1 340px;min-width:0;background:var(--surface);
+           border:1px solid var(--rule);border-radius:6px;padding:12px 14px 14px;}
+  .grafico h3{margin:0 0 2px;font-size:14px;}
+  .grafico .ayuda{margin:0 0 10px;}
+  .grafico.ancho{flex-basis:100%;}
+
+  /* Barras horizontales: para categorias con nombre largo (obras sociales,
+     profesionales). El nombre entero se lee, que en vertical no pasa. */
+  .barras{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;
+          align-items:center;}
+  .barras .et{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;
+              white-space:nowrap;}
+  .barras .v{font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--muted);
+             white-space:nowrap;}
+  .barras .pista{grid-column:1 / -1;height:9px;background:var(--surface-2);
+                 border-radius:5px;overflow:hidden;margin-bottom:5px;}
+  .barras .pista i{display:block;height:100%;border-radius:5px;
+                   background:var(--g1);min-width:2px;}
+
+  /* Columnas: para lo que tiene orden natural (horas, dias, meses). */
+  .columnas{display:flex;align-items:flex-end;gap:4px;height:150px;
+            padding-top:16px;overflow-x:auto;}
+  .columnas .col{flex:1 1 0;min-width:22px;display:flex;flex-direction:column;
+                 justify-content:flex-end;height:100%;text-align:center;}
+  .columnas .caño{background:var(--g1);border-radius:3px 3px 0 0;min-height:2px;}
+  .columnas .v{font-size:10.5px;color:var(--muted);margin-bottom:2px;
+               font-variant-numeric:tabular-nums;}
+  .columnas .et{font-size:10.5px;color:var(--muted);margin-top:4px;
+                white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  /* La rosca. Un solo circulo con stroke-dasharray por porcion: sin paths
+     calculados a mano, que es donde estos graficos se rompen. */
+  .rosca{display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
+  .rosca svg{flex:0 0 118px;width:118px;height:118px;transform:rotate(-90deg);}
+  .rosca .refs{flex:1 1 150px;min-width:0;font-size:12.5px;}
+  .rosca .refs div{display:flex;align-items:center;gap:7px;padding:2px 0;}
+  .rosca .refs .pt{width:10px;height:10px;border-radius:2px;flex:0 0 10px;}
+  .rosca .refs .et{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;
+                   white-space:nowrap;}
+  .rosca .refs .v{color:var(--muted);font-variant-numeric:tabular-nums;}
 
   /* ---------------- impresion ----------------
      En el papel no van la barra, el menu ni los botones: va el contenido.
@@ -957,7 +1074,7 @@
 // transporte_web.html.
 var CLIENT_ID    = "873472275504-qia4rjcejadpagkgam7urn0bahq0n7ur.apps.googleusercontent.com";
 var URL_NUCLEO   = "https://script.google.com/macros/s/AKfycby-OWNY3iXvC4ssuWxHb_jogLtNbUtNlPX8bGY3IMu571aKJPFxKWoHUpE-0x4xy_kb/exec";
-var BUILD_PORTAL = "2026-09-09 19:46";
+var BUILD_PORTAL = "2026-09-09 20:57";
 var URL_PORTAL   = "";   // no aplica: esta pantalla no vive en Apps Script
 </script>
 
@@ -1858,6 +1975,49 @@ function valorModal(id) {
   return el.value.trim();
 }
 
+// ------------------------------------------------------------ obligatorios
+//
+// Un formulario que no dice cuáles son los campos obligatorios los enseña a
+// los golpes: se completa entero, se aprieta Guardar y recién ahí aparece el
+// error. La marca va en la etiqueta, ANTES de escribir.
+//
+// El asterisco solo no alcanza: para un lector de pantalla es un símbolo
+// suelto sin significado. Por eso lleva title y aria-label diciendo la
+// palabra, y el campo lleva `required`.
+var OBLIG = '<span class="obligatorio" title="Obligatorio" ' +
+            'aria-label="obligatorio">*</span>';
+
+/**
+ * Corta el guardado si falta algún campo obligatorio, nombrándolos y dejando
+ * el foco en el primero que falta.
+ *
+ * @param datos  el objeto que se iba a mandar
+ * @param campos pares [clave en datos, id del input en pantalla]
+ */
+function faltanObligatorios(datos, campos) {
+  var faltan = campos.filter(function (c) { return !datos[c[0]]; });
+  if (!faltan.length) return;
+
+  campos.forEach(function (c) {
+    var el = $(c[1]);
+    if (el) el.classList.toggle('falta', !datos[c[0]]);
+  });
+  var primero = $(faltan[0][1]);
+  if (primero) primero.focus();
+
+  var nombres = faltan.map(function (c) {
+    var et = document.querySelector('label[for="' + c[1] + '"]');
+    // Del texto de la etiqueta se saca el asterisco: "Apellido *" se lee mal.
+    return et ? et.textContent.replace('*', '').trim().toLowerCase() : c[0];
+  });
+  throw {
+    codigo: 'CAMPOS_FALTANTES',
+    mensaje: nombres.length === 1
+      ? 'Falta completar: ' + nombres[0] + '.'
+      : 'Faltan completar: ' + nombres.join(', ') + '.'
+  };
+}
+
 // ---------------------------------------------------------------- catálogos
 
 function nombreDe(lista, id) {
@@ -2430,7 +2590,7 @@ function datosPaciente(t) {
 // estuviera viendo.
 
 function tituloAgenda() {
-  if (A.modo === 'tablero') return 'Tablero del centro · ' + fechaCorta(A.fecha);
+  if (A.modo === 'tablero') return 'Tablero del CIC 2 · ' + fechaCorta(A.fecha);
   if (A.modo === 'semana') {
     var l = lunesDe(A.fecha);
     return 'Semana de ' + nombreMedico(A.medicoId) + ' · ' +
@@ -2898,7 +3058,7 @@ function pintarTablero(fecha) {
   var html = '<div class="encabezado dia">' +
     '<div class="ubica">' +
       '<p class="fecha-grande">' + txt(fechaLarga(fecha)) + '</p>' +
-      '<h1>Tablero del centro</h1>' +
+      '<h1>Tablero del CIC 2</h1>' +
       '<div class="subtitulo">' +
         (todas.length
           ? columnas.length + ' de ' + todas.length +
@@ -3139,7 +3299,9 @@ function montarBuscador(idCaja, alElegir, alDarDeAlta) {
     if (!r.resultados.length) {
       html += '<div class="vacio-msg">Ningún paciente coincide con «' + txt(texto) + '».</div>';
     } else {
-      html += '<div class="tabla-cont"><table><thead><tr>' +
+      // Seis renglones a la vista y el resto con scroll: la ventana no puede
+      // crecer según cuántos coincidan con lo que se tipeó.
+      html += '<div class="tabla-cont tabla-scroll tabla-6"><table><thead><tr>' +
         '<th>Apellido y nombre</th><th>Documento</th><th>Edad</th><th></th>' +
         '</tr></thead><tbody>' +
         r.resultados.map(function (p) {
@@ -3155,7 +3317,7 @@ function montarBuscador(idCaja, alElegir, alDarDeAlta) {
       }
     }
     if (puede('paciente.crear')) {
-      html += '<p><button class="btn chico" id="bp-nuevo">Cargar paciente</button></p>';
+      html += '<p><button class="btn chico" id="bp-nuevo">Nuevo paciente</button></p>';
     }
     $('bp-resultados').innerHTML = html;
 
@@ -3191,11 +3353,11 @@ function formPacienteNuevo(textoInicial, alCrear) {
     ancho: 620,
     cuerpo:
       '<div class="fila">' +
-        '<div class="campo"><label for="p-apellido">Apellido</label>' +
-          '<input type="text" id="p-apellido" style="width:100%" value="' +
+        '<div class="campo"><label for="p-apellido">Apellido ' + OBLIG + '</label>' +
+          '<input type="text" id="p-apellido" required style="width:100%" value="' +
           txt(soloNumeros ? '' : textoInicial) + '"></div>' +
-        '<div class="campo"><label for="p-nombre">Nombre</label>' +
-          '<input type="text" id="p-nombre" style="width:100%"></div>' +
+        '<div class="campo"><label for="p-nombre">Nombre ' + OBLIG + '</label>' +
+          '<input type="text" id="p-nombre" required style="width:100%"></div>' +
       '</div>' +
       '<div class="fila">' +
         '<div class="campo"><label for="p-tipodoc">Tipo</label>' +
@@ -3203,12 +3365,12 @@ function formPacienteNuevo(textoInicial, alCrear) {
             '<option>DNI</option><option>LC</option><option>LE</option>' +
             '<option>CI</option><option>PAS</option><option>OTRO</option>' +
           '</select></div>' +
-        '<div class="campo"><label for="p-doc">Número de documento</label>' +
+        '<div class="campo"><label for="p-doc">Número de documento ' + OBLIG + '</label>' +
           // inputmode numeric levanta el teclado numérico en una tablet, y
           // solo-dígitos se fuerza al tipear (ver abajo): en el mostrador se
           // escribe 30.111.222 por costumbre, y ese punto rompe la unicidad.
           '<input type="text" id="p-doc" inputmode="numeric" autocomplete="off" ' +
-          'maxlength="11" placeholder="sin puntos" style="width:100%" value="' +
+          'required maxlength="11" placeholder="sin puntos" style="width:100%" value="' +
           txt(soloNumeros ? textoInicial : '') + '"></div>' +
         '<div class="campo"><label for="p-nac">Fecha de nacimiento</label>' +
           '<input type="date" id="p-nac" style="width:100%"></div>' +
@@ -3231,6 +3393,11 @@ function formPacienteNuevo(textoInicial, alCrear) {
         '<div class="campo"><label for="p-obra">Obra social</label>' +
           '<input type="text" id="p-obra" style="width:100%" ' +
           'placeholder="IOMA, PAMI, ninguna…"></div>' +
+        '<div class="campo"><label for="p-carnet">Nº de carnet</label>' +
+          '<input type="text" id="p-carnet" style="width:100%" autocomplete="off" ' +
+          'maxlength="40" placeholder="afiliado"></div>' +
+      '</div>' +
+      '<div class="fila">' +
         '<div class="campo" style="flex:2 1 300px"><label for="p-dom">Domicilio</label>' +
           '<input type="text" id="p-dom" style="width:100%" ' +
           'placeholder="Calle 20 1234, Balcarce">' +
@@ -3251,12 +3418,12 @@ function formPacienteNuevo(textoInicial, alCrear) {
         tipo_documento: valorModal('p-tipodoc'), nro_documento: valorModal('p-doc'),
         fecha_nacimiento: valorModal('p-nac'), sexo: valorModal('p-sexo'),
         telefono: valorModal('p-tel'), telefono_alt: valorModal('p-tel2'),
-        obra_social: valorModal('p-obra'), domicilio: valorModal('p-dom'),
+        obra_social: valorModal('p-obra'), nro_carnet: valorModal('p-carnet'),
+        domicilio: valorModal('p-dom'),
         observaciones_adm: valorModal('p-obs')
       };
-      if (!datos.apellido || !datos.nombre) {
-        throw { codigo: 'CAMPOS_FALTANTES', mensaje: 'Hacen falta el apellido y el nombre.' };
-      }
+      faltanObligatorios(datos, [['apellido', 'p-apellido'], ['nombre', 'p-nombre'],
+                                 ['nro_documento', 'p-doc']]);
       return crearPacienteConAviso(datos, alCrear);
     }
   });
@@ -3798,7 +3965,7 @@ function montarPacientes(cont) {
       '<label class="en-linea"><input type="checkbox" id="pac-inactivos"' +
         (P.inactivos ? ' checked' : '') + '> Ver también los dados de baja</label>' +
       (puede('paciente.crear')
-        ? '<button class="btn principal" id="pac-nuevo">Cargar paciente</button>' : '') +
+        ? '<button class="btn principal" id="pac-nuevo">Nuevo paciente</button>' : '') +
       '<span class="sello" id="pac-cuenta"></span>' +
     '</div>' +
     '<main class="ancha"><div id="pac-avisos"></div><div id="pac-cuerpo">' +
@@ -3922,7 +4089,7 @@ function pintarPacientes() {
       ? '<div class="caja"><h3>Nadie con ese dato</h3>' +
         '<p>Probá con menos letras, o con el número de documento.</p></div>'
       : '<div class="caja"><h3>Todavía no hay pacientes</h3>' +
-        '<p>Se cargan al dar el primer turno, o con el botón <b>Cargar paciente</b>.</p></div>';
+        '<p>Se cargan al dar el primer turno, o con el botón <b>Nuevo paciente</b>.</p></div>';
     return;
   }
 
@@ -3958,7 +4125,11 @@ function pintarPacientes() {
         (hayTel ? '<td class="num">' + telefonoCelda(p) + '</td>' : '') +
         '<td>' + txt(p.obra_social || '—') + '</td>' +
         '<td class="acciones"><button class="btn chico" data-pac="' + txt(p.id) +
-          '">Ver ficha</button></td></tr>';
+          '">Ver ficha</button>' +
+          (puede('paciente.editar')
+            ? '<button class="btn chico" data-editar="' + txt(p.id) + '">Editar</button>'
+            : '') +
+        '</td></tr>';
     }).join('') + '</tbody></table></div>';
 
   $('pac-cuerpo').innerHTML = html;
@@ -3971,7 +4142,29 @@ function pintarPacientes() {
       })[0]);
     });
   });
+  $$('#pac-cuerpo button[data-editar]').forEach(function (b2) {
+    b2.addEventListener('click', function () { editarPacientePorId(b2.dataset.editar); });
+  });
   conectarPaginado();
+}
+
+/**
+ * Editar desde el listado, sin pasar por la ficha.
+ *
+ * El renglón de la lista NO alcanza para editar: no trae el domicilio, ni el
+ * correo, ni —lo importante— la `version` de la fila. Guardar con una version
+ * inventada o vacía significa pisar el cambio de otra persona sin enterarse,
+ * que es justo lo que esa columna existe para impedir. Así que primero se
+ * pide la ficha entera y recién después se abre el formulario.
+ *
+ * Se avisa que está yendo a buscarla: es un viaje de un segundo largo y sin
+ * aviso el botón parece que no hizo nada.
+ */
+function editarPacientePorId(id) {
+  avisar('Abriendo la ficha para editar…');
+  llamar('paciente.ver', { paciente_id: id })
+    .then(function (r) { formPacienteEditar(r.paciente); })
+    .catch(function (err) { mostrarError(err, null); });
 }
 
 /** El teléfono de la lista, con el segundo abajo si lo hay. */
@@ -4296,16 +4489,16 @@ function formPacienteEditar(p) {
     ancho: 620,
     cuerpo:
       '<div class="fila">' +
-        '<div class="campo"><label for="e-apellido">Apellido</label>' +
-          '<input type="text" id="e-apellido" style="width:100%" value="' +
+        '<div class="campo"><label for="e-apellido">Apellido ' + OBLIG + '</label>' +
+          '<input type="text" id="e-apellido" required style="width:100%" value="' +
           txt(p.apellido) + '"></div>' +
-        '<div class="campo"><label for="e-nombre">Nombre</label>' +
-          '<input type="text" id="e-nombre" style="width:100%" value="' +
+        '<div class="campo"><label for="e-nombre">Nombre ' + OBLIG + '</label>' +
+          '<input type="text" id="e-nombre" required style="width:100%" value="' +
           txt(p.nombre) + '"></div>' +
       '</div>' +
       '<div class="fila">' +
-        '<div class="campo"><label for="e-doc">Número de documento</label>' +
-          '<input type="text" id="e-doc" inputmode="numeric" maxlength="11" ' +
+        '<div class="campo"><label for="e-doc">Número de documento ' + OBLIG + '</label>' +
+          '<input type="text" id="e-doc" inputmode="numeric" required maxlength="11" ' +
           'placeholder="sin puntos" style="width:100%" value="' +
           txt(p.nro_documento || '') + '"></div>' +
         '<div class="campo"><label for="e-nac">Fecha de nacimiento</label>' +
@@ -4324,9 +4517,14 @@ function formPacienteEditar(p) {
         '<div class="campo"><label for="e-tel2">Otro teléfono</label>' +
           '<input type="tel" id="e-tel2" style="width:100%" value="' +
           txt(p.telefono_alt || '') + '"></div>' +
+      '</div>' +
+      '<div class="fila">' +
         '<div class="campo"><label for="e-obra">Obra social</label>' +
           '<input type="text" id="e-obra" style="width:100%" value="' +
           txt(p.obra_social || '') + '"></div>' +
+        '<div class="campo"><label for="e-carnet">Nº de carnet</label>' +
+          '<input type="text" id="e-carnet" style="width:100%" maxlength="40" ' +
+          'placeholder="afiliado" value="' + txt(p.nro_carnet || '') + '"></div>' +
       '</div>' +
       '<div class="campo"><label for="e-dom">Domicilio</label>' +
         '<input type="text" id="e-dom" style="width:100%" value="' +
@@ -4350,13 +4548,13 @@ function formPacienteEditar(p) {
         nro_documento: valorModal('e-doc'), fecha_nacimiento: valorModal('e-nac'),
         sexo: valorModal('e-sexo'),
         telefono: valorModal('e-tel'), telefono_alt: valorModal('e-tel2'),
-        obra_social: valorModal('e-obra'), domicilio: valorModal('e-dom'),
+        obra_social: valorModal('e-obra'), nro_carnet: valorModal('e-carnet'),
+        domicilio: valorModal('e-dom'),
         observaciones_adm: valorModal('e-obs')
       };
       if (puede('paciente.baja')) datos.activo = valorModal('e-activo');
-      if (!datos.apellido || !datos.nombre) {
-        throw { codigo: 'CAMPOS_FALTANTES', mensaje: 'Hacen falta el apellido y el nombre.' };
-      }
+      faltanObligatorios(datos, [['apellido', 'e-apellido'], ['nombre', 'e-nombre'],
+                                 ['nro_documento', 'e-doc']]);
       return llamar('paciente.editar', datos).then(function () {
         avisar('Ficha actualizada');
         refrescarPacientes();
@@ -4800,6 +4998,8 @@ function pintarRespaldos(cont, datos) {
       }).join('') + '</tbody></table></div>';
   }
 
+  html += '<div id="rsp-copias"><div class="cargando">Buscando las copias…</div></div>';
+
   cont.innerHTML = html + '</section>';
 
   $('rsp-refrescar').addEventListener('click', function () { recargarConfig(); });
@@ -4807,6 +5007,224 @@ function pintarRespaldos(cont, datos) {
   if ($('rsp-programar')) {
     $('rsp-programar').addEventListener('click', function () { programarRespaldo(cont); });
   }
+  pedirCopias(cont, gen);
+}
+
+// ---------------------------------------------------------- las copias
+
+/**
+ * Los archivos que HAY en la carpeta del Drive.
+ *
+ * Se piden aparte de la bitácora, y a propósito: la bitácora dice lo que el
+ * sistema hizo, la carpeta dice lo que quedó. Si alguien borró una copia a
+ * mano, o arrastró ahí una que se había bajado, solo la carpeta lo sabe.
+ *
+ * Van en un segundo pedido para que la pantalla aparezca con la bitácora
+ * puesta mientras Drive contesta, que es la parte lenta.
+ */
+function pedirCopias(cont, gen) {
+  llamar('config.respaldo.copias', {}, { fondo: true })
+    .then(function (r) {
+      if (!vigente(gen) || !$('rsp-copias')) return;
+      pintarCopias(r, cont);
+    })
+    .catch(function (err) {
+      if (!vigente(gen) || !$('rsp-copias')) return;
+      mostrarError(err, $('rsp-copias'));
+    });
+}
+
+function pintarCopias(r, cont) {
+  COPIAS_RSP = r.copias || [];
+
+  if (!COPIAS_RSP.length) {
+    $('rsp-copias').innerHTML = '<div class="caja" style="margin-top:14px">' +
+      '<h3>Copias en el Drive</h3><p>La carpeta está vacía.' +
+      (r.error ? ' (' + txt(r.error) + ')' : '') + '</p></div>';
+    return;
+  }
+
+  $('rsp-copias').innerHTML =
+    '<div class="caja" style="margin-top:14px"><h3>Copias en el Drive</h3>' +
+    '<p class="ayuda">Estos son los archivos que hay ahora en la carpeta. ' +
+    '<b>Descargar</b> baja la copia a esta computadora en formato Excel — ' +
+    'conviene guardar una fuera de Google cada tanto, porque si se pierde la ' +
+    'cuenta se pierden también las copias que viven en ella.</p>' +
+    '<p class="ayuda">Ver y descargar los abre el Drive con tu cuenta de Google. ' +
+    'Si entraste con usuario y contraseña, Google te va a pedir permiso: los ' +
+    'archivos son de la cuenta del centro.</p></div>' +
+    '<div class="tabla-cont tabla-scroll" style="margin-top:10px"><table><thead><tr>' +
+    '<th>Copia</th><th>Fecha</th><th>Tamaño</th><th></th>' +
+    '</tr></thead><tbody>' +
+    COPIAS_RSP.map(function (c) {
+      return '<tr><td><b>' + txt(c.nombre) + '</b>' +
+          (c.es_planilla ? '' :
+            '<div class="ayuda">No es planilla de Google: para restaurar desde ' +
+            'acá hay que abrirla una vez con Hojas de cálculo.</div>') +
+        '</td>' +
+        '<td class="num">' + txt(fechaCorta(c.fecha) + (c.hora ? ' ' + c.hora : '')) + '</td>' +
+        '<td class="num">' + txt(pesoLegible(c.tamano)) + '</td>' +
+        '<td class="acciones">' +
+          '<a class="btn chico" target="_blank" rel="noopener" href="' +
+            txt(c.url) + '">Ver</a>' +
+          '<a class="btn chico" target="_blank" rel="noopener" href="' +
+            txt(c.descarga) + '">Descargar</a>' +
+          (puede('config.restaurar') && c.es_planilla
+            ? '<button class="btn chico peligro" data-restaurar="' + txt(c.id) +
+              '">Restaurar…</button>'
+            : '') +
+        '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+
+  $$('#rsp-copias button[data-restaurar]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      abrirRestauracion(b.dataset.restaurar, cont);
+    });
+  });
+}
+
+/** Las copias que se están mostrando, para no volver a pedirlas al abrir la
+ *  ventana de restauración. */
+var COPIAS_RSP = [];
+
+function pesoLegible(bytes) {
+  var n = Number(bytes || 0);
+  if (!n) return '—';
+  if (n < 1024) return n + ' B';
+  if (n < 1024 * 1024) return Math.round(n / 1024) + ' KB';
+  return (Math.round(n / 104857.6) / 10) + ' MB';
+}
+
+// ---------------------------------------------------------- restaurar
+
+/**
+ * ================================================================
+ *  LA VENTANA MÁS PELIGROSA DEL SISTEMA
+ *
+ *  Todo lo demás corrige una fila. Esto reemplaza tablas enteras y no tiene
+ *  deshacer. La pantalla está armada para que sea DIFÍCIL hacerlo sin
+ *  querer y FÁCIL entender qué va a pasar:
+ *
+ *  · Primero se muestra, tabla por tabla, cuántas filas hay hoy y cuántas
+ *    trae la copia. Esa resta es la decisión.
+ *  · El modo por omisión es AGREGAR lo que falta, que no pierde nada.
+ *    Reemplazar hay que elegirlo, y cuando se elige la pantalla dice
+ *    cuántas filas se van a perder.
+ *  · Hay que escribir la palabra RESTAURAR. Un botón se aprieta sin querer.
+ * ================================================================
+ */
+function abrirRestauracion(archivoId, cont) {
+  var copia = COPIAS_RSP.filter(function (c) { return c.id === archivoId; })[0] || {};
+  abrirModal({
+    titulo: 'Restaurar desde ' + (copia.nombre || 'una copia'),
+    ancho: 700,
+    cuerpo: '<div class="cargando">Leyendo la copia…</div>',
+    textoAceptar: null
+  });
+
+  llamar('config.respaldo.contenido', { archivo_id: archivoId })
+    .then(function (r) {
+      if (!document.querySelector('.fondo-modal')) return;   // la cerró mientras tanto
+      cerrarModal();
+      formRestaurar(r, copia, cont);
+    })
+    .catch(function (err) {
+      cerrarModal();
+      mostrarError(err, null);
+    });
+}
+
+function formRestaurar(r, copia, cont) {
+  var idem = nuevaIdem();
+  var utiles = r.tablas.filter(function (t) { return !t.bloqueada; });
+
+  function filaTabla(t) {
+    var hoy = (t.filas_hoy === null) ? null : Number(t.filas_hoy);
+    var enCopia = Number(t.filas_copia);
+    var deMas = (hoy === null) ? 0 : Math.max(0, hoy - enCopia);
+    return '<tr>' +
+      '<td><label class="en-linea"><input type="checkbox" class="rst-tabla" ' +
+        'value="' + txt(t.nombre) + '"' + (t.tiene_id ? '' : ' data-sin-id="1"') + '> ' +
+        txt(t.nombre) + '</label>' +
+        (t.tiene_id ? '' : '<div class="ayuda">Sin columna id: esta tabla solo ' +
+                           'se puede reemplazar.</div>') +
+      '</td>' +
+      '<td class="num">' + (hoy === null ? 'no existe' : hoy) + '</td>' +
+      '<td class="num">' + enCopia + '</td>' +
+      '<td class="num">' + (deMas ? '<b>' + deMas + '</b>' : '—') + '</td>' +
+    '</tr>';
+  }
+
+  abrirModal({
+    titulo: 'Restaurar desde ' + (copia.nombre || 'una copia'),
+    ancho: 720,
+    cuerpo:
+      '<div class="caja aviso"><h3>Esto no se puede deshacer</h3>' +
+      '<p>Antes de tocar nada, el sistema hace una copia del estado actual. ' +
+      'Si esa copia falla, la restauración no se hace.</p></div>' +
+
+      '<div class="campo"><label>¿Qué tablas traer?</label>' +
+      '<div class="tabla-cont tabla-scroll tabla-6"><table><thead><tr>' +
+      '<th>Tabla</th><th>Filas hoy</th><th>En la copia</th><th>De más hoy</th>' +
+      '</tr></thead><tbody>' +
+      utiles.map(filaTabla).join('') +
+      '</tbody></table></div>' +
+      '<div class="ayuda">«De más hoy» son las filas que hay ahora y la copia ' +
+      'no tiene: lo cargado después de esa fecha. Hasta ' + r.tope +
+      ' tablas por vez.</div></div>' +
+
+      '<div class="campo"><label>¿Cómo?</label>' +
+      '<label class="en-linea"><input type="radio" name="rst-modo" value="AGREGAR" checked> ' +
+        '<b>Agregar lo que falta</b> — trae solo las filas que hoy no están. ' +
+        'No se pierde nada.</label>' +
+      '<label class="en-linea"><input type="radio" name="rst-modo" value="REEMPLAZAR"> ' +
+        '<b>Reemplazar</b> — la tabla queda igual que en la copia. ' +
+        '<span style="color:var(--alerta)">Se pierde todo lo cargado después.</span></label>' +
+      '</div>' +
+
+      '<div class="campo"><label for="rst-palabra">Escribí ' + txt(r.palabra) +
+        ' para confirmar ' + OBLIG + '</label>' +
+        '<input type="text" id="rst-palabra" autocomplete="off" ' +
+        'placeholder="' + txt(r.palabra) + '" style="width:100%"></div>',
+    textoAceptar: 'Restaurar',
+    alAceptar: function () {
+      var hojas = $$('.fondo-modal .rst-tabla')
+        .filter(function (c) { return c.checked; })
+        .map(function (c) { return c.value; });
+      var modo = ($$('.fondo-modal input[name="rst-modo"]')
+        .filter(function (x) { return x.checked; })[0] || {}).value || 'AGREGAR';
+
+      if (!hojas.length) {
+        throw { codigo: 'SIN_TABLAS', mensaje: 'Elegí al menos una tabla.' };
+      }
+      // Se avisa acá y no después del viaje: el servidor lo rechaza igual,
+      // pero enterarse tras dos minutos de copia sería cruel.
+      if (modo === 'AGREGAR' &&
+          $$('.fondo-modal .rst-tabla').some(function (c) {
+            return c.checked && c.dataset.sinId;
+          })) {
+        throw { codigo: 'SIN_COLUMNA_ID',
+                mensaje: 'Alguna de las tablas elegidas no tiene columna id: ' +
+                         'esas solo se pueden reemplazar.' };
+      }
+      if (valorModal('rst-palabra').toUpperCase() !== r.palabra) {
+        throw { codigo: 'SIN_CONFIRMAR',
+                mensaje: 'Escribí ' + r.palabra + ' para confirmar.' };
+      }
+
+      return llamar('config.respaldo.restaurar', {
+        idem: idem, archivo_id: r.archivo_id, hojas: hojas,
+        modo: modo, confirmacion: valorModal('rst-palabra')
+      }).then(function (res) {
+        avisar(res.mensaje);
+        // Todo lo que había en el navegador quedó viejo de golpe: no es una
+        // fila que cambió, son tablas enteras.
+        olvidarCache('config');
+        if (typeof olvidarAgendas === 'function') olvidarAgendas();
+        recargarConfig();
+      });
+    }
+  });
 }
 
 /**
@@ -6120,6 +6538,7 @@ function formUsuario(u, roles) {
 var R = { seccion: null, desde: null, hasta: null, gen: 0 };
 
 var SECCIONES_REPORTE = [
+  { id:'estadisticas', etiqueta:'Estadísticas',  permiso:'reporte.ver',  pintar:pintarEstadisticas },
   { id:'ocupacion', etiqueta:'Ocupación',        permiso:'reporte.ver',  pintar:pintarOcupacion },
   { id:'ausentismo',etiqueta:'Ausentismo',       permiso:'reporte.ver',  pintar:pintarAusentismo },
   { id:'fuera',     etiqueta:'Fuera de horario', permiso:'reporte.ver',  pintar:pintarFueraPlantilla },
@@ -6199,6 +6618,318 @@ function pedirReporte(cont, accion, datos, alLlegar) {
 }
 
 function porcentaje(v) { return (v === null || v === undefined) ? '—' : v + ' %'; }
+
+// =====================================================================
+//  ESTADÍSTICAS
+//
+//  ================================================================
+//   QUÉ SE PUEDE MIRAR ACÁ Y QUÉ NO
+//
+//   Cuentas sobre lo que este sistema guarda: el padrón y los turnos.
+//   Cuánta gente hay, de qué edades, con qué cobertura; cuántos turnos, en
+//   qué estado terminaron, a qué hora y con quién.
+//
+//   NO hay ni va a haber nada clínico. Este sistema es una agenda y estas
+//   son las estadísticas de una agenda.
+//
+//   Ninguna cuenta identifica a nadie: salen números y nombres de
+//   categoría, nunca una fila de paciente.
+//  ================================================================
+//
+//  Todo llega en UN pedido. Ocho gráficos podrían ser ocho acciones, pero
+//  cada viaje a Apps Script cuesta más de un segundo: la pantalla tardaría
+//  ocho segundos en armarse y no la abriría nadie dos veces.
+// =====================================================================
+
+/** Qué grupos de gráficos se muestran. Se guarda entre visitas dentro de la
+ *  pestaña: quien viene a mirar la actividad casi nunca quiere el padrón. */
+var GRUPOS_EST = [
+  { id: 'resumen',   etiqueta: 'Resumen' },
+  { id: 'padron',    etiqueta: 'Padrón de pacientes' },
+  { id: 'actividad', etiqueta: 'Actividad' },
+  { id: 'cuando',    etiqueta: 'Cuándo se atiende' }
+];
+var EST_VISIBLES = null;      // null = todos
+
+function estVisible(id) {
+  return !EST_VISIBLES || EST_VISIBLES[id] !== false;
+}
+
+function pintarEstadisticas(cont) {
+  pedirReporte(cont, 'reporte.estadisticas', { desde: R.desde, hasta: R.hasta },
+    function (r) { dibujarEstadisticas(cont, r); });
+}
+
+function dibujarEstadisticas(cont, r) {
+  var a = r.actividad;
+  var p = r.padron;
+
+  var html = '<section class="bloque"><h2>Estadísticas · ' +
+    txt(fechaCorta(r.desde) + ' al ' + fechaCorta(r.hasta)) + '</h2>' +
+    selectorGrupos(r) + '<div id="est-cuerpo">';
+
+  // ------------------------------------------------------------- resumen
+  if (estVisible('resumen')) {
+    html += '<div class="tarjetas">' +
+      (p ? tarjeta(p.total, 'Pacientes en el padrón',
+                   p.bajas ? p.bajas + ' dados de baja' : '') : '') +
+      tarjeta(a.total, 'Turnos en el período',
+              a.sobreturnos ? a.sobreturnos + ' sobreturnos' : '') +
+      tarjeta(a.pacientes_distintos, 'Personas distintas', 'con al menos un turno') +
+      tarjeta(a.atendidos, 'Atendidos', '') +
+      tarjeta(a.ausentismo + ' %', 'Ausentismo',
+              a.ausentes + ' de ' + a.cerrados + ' cerrados') +
+      '</div>';
+  }
+
+  // ------------------------------------------------------------- padrón
+  if (p && estVisible('padron')) {
+    html += '<div class="graficos">' +
+      rosca('Sexo', p.sexo,
+            'Como está cargado en cada ficha.') +
+      rosca('Cobertura', [
+              { etiqueta: 'Con obra social', valor: p.con_obra },
+              { etiqueta: 'Sin obra social', valor: p.sin_obra }
+            ],
+            'Cuenta si el campo está completo, no si la cobertura está vigente.') +
+      barras('Edades', p.edad,
+             'Calculadas sobre la fecha de nacimiento cargada. ' +
+             (p.total - p.con_fecha_nacimiento) + ' fichas no la tienen.') +
+      barras('Obras sociales', p.obras_sociales,
+             'IOMA, Ioma e I.O.M.A. se cuentan juntas: el campo es texto libre ' +
+             'y se agrupa ignorando mayúsculas, tildes y puntos.') +
+      '</div>';
+  } else if (!p && estVisible('padron')) {
+    html += '<div class="caja"><h3>Padrón</h3><p>Tu rol no ve el padrón completo, ' +
+      'así que estas cuentas no se muestran. Sí ves toda la actividad que te ' +
+      'corresponde, más abajo.</p></div>';
+  }
+
+  // ------------------------------------------------------------ actividad
+  if (estVisible('actividad')) {
+    html += '<div class="graficos">' +
+      rosca('Cómo terminaron los turnos', a.estado,
+            'RESERVADO son los que todavía no llegaron.') +
+      barras('Tipo de consulta', a.tipo_consulta, '') +
+      barras('Especialidad', a.especialidad, '') +
+      barras('Profesional', a.profesional, '') +
+      '</div>';
+  }
+
+  // --------------------------------------------------------------- cuándo
+  if (estVisible('cuando')) {
+    html += '<div class="graficos">' +
+      columnas('Por día de la semana', a.dia_semana, true, '') +
+      columnas('Por hora', a.hora, true,
+               'Agrupado por hora en punto: un turno de las 10:30 cuenta en las 10.') +
+      columnas('Por mes', a.mes.map(function (x) {
+                 return { etiqueta: mesCorto(x.etiqueta), valor: x.valor };
+               }), false,
+               'Solo los meses que caen dentro del período elegido.') +
+      '</div>';
+  }
+
+  html += '</div></section>';
+  cont.innerHTML = html;
+
+  $$('#vista .est-grupo').forEach(function (c) {
+    c.addEventListener('change', function () {
+      EST_VISIBLES = EST_VISIBLES || {};
+      EST_VISIBLES[c.value] = c.checked;
+      dibujarEstadisticas(cont, r);
+    });
+  });
+
+  // Se exporta lo que se está mirando, en una sola planilla: cada gráfico es
+  // un bloque de filas etiqueta/valor. Es lo que se pega en un informe.
+  ULTIMO_REPORTE = {
+    accion: 'exportar.reporte', origen: 'reporte.estadisticas',
+    titulo: 'Estadísticas',
+    subtitulo: fechaCorta(r.desde) + ' al ' + fechaCorta(r.hasta),
+    columnas: ['Grupo', 'Categoría', 'Cantidad'],
+    filas: filasExportables(r)
+  };
+}
+
+/** Los interruptores de arriba. Un checkbox por grupo, no un menú: se quieren
+ *  mirar varios a la vez y compararlos, que es lo que un menú impide. */
+function selectorGrupos(r) {
+  return '<div class="filtro-medicos sin-imprimir">' +
+    '<div class="cab"><span class="rot">Qué mostrar</span>' +
+    '<p class="ayuda">Se pueden mirar varios a la vez, para compararlos.</p></div>' +
+    '<div class="chips">' +
+    GRUPOS_EST.map(function (g) {
+      // El padrón no se ofrece a quien no lo puede ver: un interruptor que no
+      // enciende nada es peor que no tener el interruptor.
+      if (g.id === 'padron' && !r.hay_padron) return '';
+      return '<label class="chip">' +
+        '<input type="checkbox" class="est-grupo" value="' + txt(g.id) + '"' +
+        (estVisible(g.id) ? ' checked' : '') + '>' +
+        '<span class="quien">' + txt(g.etiqueta) + '</span></label>';
+    }).join('') + '</div></div>';
+}
+
+function tarjeta(numero, rotulo, ayuda) {
+  return '<div class="tarjeta"><span class="n">' + txt(String(numero)) + '</span>' +
+    '<span class="r">' + txt(rotulo) + '</span>' +
+    (ayuda ? '<span class="ay">' + txt(ayuda) + '</span>' : '') + '</div>';
+}
+
+// ---------------------------------------------------------------- gráficos
+//
+// Dibujados con cajas de HTML, sin ninguna librería. Una librería de gráficos
+// se baja de internet cada vez que se abre la pantalla, y el día que ese
+// servidor no conteste la pantalla queda a medias sin que nadie entienda por
+// qué. Además el color acá NUNCA informa solo: cada barra lleva su número
+// escrito al lado, para que se lea igual en una impresión en blanco y negro.
+
+/** El color de la porción i. Ocho y vuelve a empezar. */
+function colorSerie(i) { return 'var(--g' + ((i % 8) + 1) + ')'; }
+
+function totalSerie(serie) {
+  return (serie || []).reduce(function (n, x) { return n + Number(x.valor || 0); }, 0);
+}
+
+function barras(titulo, serie, ayuda) {
+  serie = serie || [];
+  var max = serie.reduce(function (m, x) { return Math.max(m, Number(x.valor) || 0); }, 0);
+  var total = totalSerie(serie);
+
+  return '<div class="grafico"><h3>' + txt(titulo) + '</h3>' +
+    (ayuda ? '<p class="ayuda">' + txt(ayuda) + '</p>' : '') +
+    (!total
+      ? '<div class="vacio-msg">Sin datos en este período.</div>'
+      : '<div class="barras">' +
+        serie.map(function (x, i) {
+          var v = Number(x.valor) || 0;
+          var ancho = max ? Math.max(1, Math.round((v / max) * 100)) : 0;
+          return '<span class="et" title="' + txt(x.etiqueta) + '">' +
+              txt(x.etiqueta) + '</span>' +
+            '<span class="v">' + v + ' · ' + porcentajeDe(v, total) + '</span>' +
+            '<span class="pista"><i style="width:' + ancho + '%;background:' +
+              colorSerie(i) + '"></i></span>';
+        }).join('') + '</div>') +
+    '</div>';
+}
+
+/**
+ * Columnas verticales, para lo que tiene orden natural: horas, días, meses.
+ *
+ * unSoloColor porque en una serie ordenada el color no distingue nada —las
+ * horas no son categorías, son una escala— y ocho colores rotando harían
+ * pensar que significan algo.
+ */
+function columnas(titulo, serie, unSoloColor, ayuda) {
+  serie = serie || [];
+  var max = serie.reduce(function (m, x) { return Math.max(m, Number(x.valor) || 0); }, 0);
+
+  return '<div class="grafico' + (serie.length > 12 ? ' ancho' : '') + '">' +
+    '<h3>' + txt(titulo) + '</h3>' +
+    (ayuda ? '<p class="ayuda">' + txt(ayuda) + '</p>' : '') +
+    (!max
+      ? '<div class="vacio-msg">Sin datos en este período.</div>'
+      : '<div class="columnas">' +
+        serie.map(function (x, i) {
+          var v = Number(x.valor) || 0;
+          var alto = Math.max(2, Math.round((v / max) * 100));
+          return '<div class="col" title="' + txt(x.etiqueta + ': ' + v) + '">' +
+            '<span class="v">' + (v || '') + '</span>' +
+            '<div class="caño" style="height:' + alto + '%;background:' +
+              (unSoloColor ? 'var(--g1)' : colorSerie(i)) + '"></div>' +
+            '<span class="et">' + txt(x.etiqueta) + '</span></div>';
+        }).join('') + '</div>') +
+    '</div>';
+}
+
+/**
+ * La rosca.
+ *
+ * Un solo círculo con stroke-dasharray por porción, en vez de un path
+ * calculado con senos y cosenos: menos código, y no hay forma de que se
+ * rompa en el borde de los 180 grados, que es donde se rompen siempre.
+ *
+ * El agujero del medio lleva el total: es el número que se busca primero.
+ */
+function rosca(titulo, serie, ayuda) {
+  serie = (serie || []).filter(function (x) { return Number(x.valor) > 0; });
+  var total = totalSerie(serie);
+  var RADIO = 44, GROSOR = 17;
+  var vuelta = 2 * Math.PI * RADIO;
+  var recorrido = 0;
+
+  var arcos = serie.map(function (x, i) {
+    var parte = (Number(x.valor) / total) * vuelta;
+    var arco = '<circle cx="59" cy="59" r="' + RADIO + '" fill="none" ' +
+      'stroke="' + colorSerie(i) + '" stroke-width="' + GROSOR + '" ' +
+      'stroke-dasharray="' + parte + ' ' + (vuelta - parte) + '" ' +
+      'stroke-dashoffset="' + (-recorrido) + '"></circle>';
+    recorrido += parte;
+    return arco;
+  }).join('');
+
+  return '<div class="grafico"><h3>' + txt(titulo) + '</h3>' +
+    (ayuda ? '<p class="ayuda">' + txt(ayuda) + '</p>' : '') +
+    (!total
+      ? '<div class="vacio-msg">Sin datos en este período.</div>'
+      : '<div class="rosca">' +
+        '<svg viewBox="0 0 118 118" role="img" aria-label="' +
+          txt(titulo + ': ' + serie.map(function (x) {
+            return x.etiqueta + ' ' + x.valor;
+          }).join(', ')) + '">' + arcos + '</svg>' +
+        '<div class="refs">' +
+          serie.map(function (x, i) {
+            return '<div><span class="pt" style="background:' + colorSerie(i) +
+              '"></span><span class="et" title="' + txt(x.etiqueta) + '">' +
+              txt(x.etiqueta) + '</span><span class="v">' + x.valor + ' · ' +
+              porcentajeDe(x.valor, total) + '</span></div>';
+          }).join('') +
+        '</div></div>') +
+    '</div>';
+}
+
+function porcentajeDe(v, total) {
+  if (!total) return '0 %';
+  return (Math.round((Number(v) / total) * 1000) / 10) + ' %';
+}
+
+/** '2026-09' -> 'sep 2026'. Los meses enteros no entran abajo de una columna. */
+function mesCorto(periodo) {
+  var p = String(periodo).split('-');
+  var m = Number(p[1]);
+  if (!m || !MESES[m - 1]) return periodo;
+  return MESES[m - 1].substring(0, 3) + ' ' + p[0];
+}
+
+/** Todos los gráficos como filas, para la planilla. */
+function filasExportables(r) {
+  var filas = [];
+  function bloque(grupo, serie) {
+    (serie || []).forEach(function (x) {
+      filas.push([grupo, x.etiqueta, x.valor]);
+    });
+  }
+  var a = r.actividad;
+  if (r.padron) {
+    filas.push(['Padrón', 'Pacientes activos', r.padron.total]);
+    filas.push(['Padrón', 'Dados de baja', r.padron.bajas]);
+    filas.push(['Padrón', 'Con teléfono cargado', r.padron.con_telefono]);
+    bloque('Sexo', r.padron.sexo);
+    bloque('Edades', r.padron.edad);
+    bloque('Obras sociales', r.padron.obras_sociales);
+  }
+  filas.push(['Actividad', 'Turnos del período', a.total]);
+  filas.push(['Actividad', 'Sobreturnos', a.sobreturnos]);
+  filas.push(['Actividad', 'Personas distintas', a.pacientes_distintos]);
+  filas.push(['Actividad', 'Ausentismo %', a.ausentismo]);
+  bloque('Estado', a.estado);
+  bloque('Tipo de consulta', a.tipo_consulta);
+  bloque('Especialidad', a.especialidad);
+  bloque('Profesional', a.profesional);
+  bloque('Día de la semana', a.dia_semana);
+  bloque('Hora', a.hora);
+  bloque('Mes', a.mes);
+  return filas;
+}
 
 // ==================================== el registro, en castellano
 //
