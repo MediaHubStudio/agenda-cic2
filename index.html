@@ -176,6 +176,12 @@
   .btn.peligro{color:var(--alerta);border-color:var(--alerta);}
   .btn.chico{padding:4px 9px;min-height:30px;font-size:13px;}
   .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  /* Los enlaces que se ven como botón (abrir la carpeta de respaldos, salir de
+     Google) son <a>, y un <a> es en línea: sin esto el min-height no se aplica
+     y quedan más bajos que los botones de al lado. */
+  a.btn{display:inline-flex;align-items:center;justify-content:center;
+        text-decoration:none;color:inherit;}
+  a.btn.principal{color:var(--sobre-acento);}
   .nav-fechas{display:flex;}
   .nav-fechas .btn{border-radius:0;margin-left:-1px;}
   .nav-fechas .btn:first-child{border-radius:4px 0 0 4px;margin-left:0;}
@@ -951,7 +957,7 @@
 // transporte_web.html.
 var CLIENT_ID    = "873472275504-qia4rjcejadpagkgam7urn0bahq0n7ur.apps.googleusercontent.com";
 var URL_NUCLEO   = "https://script.google.com/macros/s/AKfycby-OWNY3iXvC4ssuWxHb_jogLtNbUtNlPX8bGY3IMu571aKJPFxKWoHUpE-0x4xy_kb/exec";
-var BUILD_PORTAL = "2026-09-06 18:47";
+var BUILD_PORTAL = "2026-09-09 19:46";
 var URL_PORTAL   = "";   // no aplica: esta pantalla no vive en Apps Script
 </script>
 
@@ -2057,7 +2063,13 @@ function montarAgenda(cont) {
   $('ag-sig').addEventListener('click', function () { irAFecha(sumarDias(A.fecha,  1)); });
   $('ag-hoy').addEventListener('click', function () { irAFecha(S.sesion.hoy || hoyLocal()); });
   if ($('ag-sobre')) {
-    $('ag-sobre').addEventListener('click', function () { nuevoSobreturno(A.medicoId, A.fecha); });
+    // En el tablero el selector de profesional está apagado: se están viendo
+    // todas las columnas. Pasar A.medicoId ahí es pasar el que quedó de la
+    // vista anterior, que no es el que la persona tiene delante. Con null, el
+    // sobreturno pregunta primero de quién es.
+    $('ag-sobre').addEventListener('click', function () {
+      nuevoSobreturno(A.modo === 'tablero' ? null : A.medicoId, A.fecha);
+    });
   }
   conectarBotonesSalida('ag',
     function () { imprimirPantalla(tituloAgenda()); },
@@ -3639,17 +3651,27 @@ function formReprogramar(turno, fechaOrigen, medicoId) {
  * meter en algún lado.
  */
 function nuevoSobreturno(medicoId, fecha) {
+  // Sin profesional decidido —es lo que pasa en el tablero, donde se están
+  // mirando todas las columnas a la vez— primero hay que preguntar de quién
+  // es el sobreturno. Antes se usaba en silencio el que hubiera quedado en el
+  // selector, que en el tablero está apagado: el sobreturno terminaba en la
+  // agenda equivocada sin que nadie lo eligiera.
+  if (!medicoId) { elegirMedicoParaSobreturno(fecha); return; }
+
   var g = A.grillas[claveAgenda(medicoId, fecha)];
   if (!g || !g.franjas.length) {
     avisar('Ese día no tiene horario de atención configurado: no se puede colgar un ' +
            'sobreturno de ninguna franja.', 'error');
     return;
   }
+  var m = medicoDe(medicoId);
   abrirModal({
     titulo: 'Sobreturno · ' + fechaLarga(fecha),
     cuerpo:
-      '<div class="caja"><p>El sobreturno se cuelga de un horario de referencia, para ' +
-      'que quede claro entre qué turnos se va a atender.</p></div>' +
+      '<div class="caja"><p>Sobreturno para <b>' +
+      txt(m ? (m.apellido + ', ' + m.nombre) : 'el profesional elegido') + '</b>.</p>' +
+      '<p>Se cuelga de un horario de referencia, para que quede claro entre qué ' +
+      'turnos se va a atender.</p></div>' +
       '<div class="campo"><label>Horario de referencia</label><div>' +
       g.franjas.map(function (f) {
         return '<button class="btn chico" data-ini="' + txt(f.inicio) + '" ' +
@@ -3662,6 +3684,63 @@ function nuevoSobreturno(medicoId, fecha) {
     b.addEventListener('click', function () {
       cerrarModal();
       darTurno({ inicio: b.dataset.ini, hora: b.dataset.hora, sobreturno: true }, medicoId, fecha);
+    });
+  });
+}
+
+/**
+ * ¿De quién es el sobreturno?
+ *
+ * Solo se ofrecen los profesionales que ESE DÍA atienden: un sobreturno se
+ * cuelga de una franja, y quien no tiene franjas ese día no tiene de dónde
+ * colgarlo. Ofrecerlo igual sería mandar a la persona a un callejón sin
+ * salida un clic más adelante.
+ *
+ * Y solo los que el permiso alcanza: con alcance PROPIOS, la única agenda en
+ * la que se puede meter un sobreturno es la propia, así que la lista tiene un
+ * solo nombre y el paso se saltea.
+ */
+function elegirMedicoParaSobreturno(fecha) {
+  var alc = alcance('turno.sobreturno');
+  var todos = alc.indexOf('TODOS') >= 0;
+  var mio = S.sesion.usuario.medico_id;
+
+  var candidatos = (S.sesion.catalogos.medicos || []).filter(function (m) {
+    if (!todos && String(m.id) !== String(mio)) return false;
+    var g = A.grillas[claveAgenda(m.id, fecha)];
+    return !!(g && g.franjas.length);
+  });
+
+  if (!candidatos.length) {
+    avisar('Ningún profesional al que puedas cargarle un sobreturno atiende el ' +
+           fechaCorta(fecha) + ': no hay franja de la cual colgarlo.', 'error');
+    return;
+  }
+  // Uno solo: preguntar sería hacerle apretar un botón sin alternativa.
+  if (candidatos.length === 1) { nuevoSobreturno(candidatos[0].id, fecha); return; }
+
+  abrirModal({
+    titulo: 'Sobreturno · ' + fechaLarga(fecha),
+    cuerpo:
+      '<div class="caja"><p>¿En la agenda de quién va el sobreturno?</p>' +
+      '<p class="ayuda">Solo aparecen los profesionales que atienden ese día.</p></div>' +
+      '<div class="campo"><label>Profesional</label><div>' +
+      candidatos.map(function (m) {
+        var g = A.grillas[claveAgenda(m.id, fecha)];
+        var libres = g.franjas.filter(function (f) { return f.libre; }).length;
+        return '<button class="btn" data-medico="' + txt(m.id) + '" ' +
+               'style="margin:3px">' + txt(m.apellido + ', ' + m.nombre) +
+               '<span class="ayuda" style="margin-left:8px">' +
+               (libres ? libres + ' libre' + (libres === 1 ? '' : 's')
+                       : 'sin lugar') + '</span></button>';
+      }).join('') + '</div></div>',
+    textoAceptar: null
+  });
+
+  $$('.fondo-modal button[data-medico]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      cerrarModal();
+      nuevoSobreturno(b.dataset.medico, fecha);
     });
   });
 }
@@ -4312,6 +4391,7 @@ var SECCIONES_CONFIG = [
   { id:'usuarios',      etiqueta:'Usuarios',       permiso:'config.usuarios',pintar:pintarUsuarios },
   { id:'roles',         etiqueta:'Roles y permisos',permiso:'config.roles',   pintar:pintarRoles },
   { id:'feriados',      etiqueta:'Feriados',       permiso:'config.catalogos',pintar:pintarFeriados },
+  { id:'respaldos',     etiqueta:'Respaldos',      permiso:'config.sistema',  pintar:pintarRespaldos },
   { id:'velocidad',     etiqueta:'Velocidad',      permiso:'config.sistema',  pintar:pintarVelocidad }
 ];
 
@@ -4626,6 +4706,218 @@ function alGuardarFeriado(r) {
   // La agenda cambia: lo que había en el navegador ya no vale.
   if (typeof olvidarAgendas === 'function') olvidarAgendas();
   recargarConfig();
+}
+
+// ================================================================ respaldos
+
+/**
+ * Respaldos: el botón para hacer una copia ahora y la bitácora de las que
+ * se hicieron.
+ *
+ * Por qué esta pantalla existe: el respaldo automático ya corría, pero
+ * corría a ciegas. Nadie podía contestar "¿cuándo fue la última copia buena?"
+ * sin entrar al editor de Apps Script a mirar los registros de ejecución, y
+ * eso lo puede hacer una sola persona. Un respaldo que nadie verifica es un
+ * respaldo que se descubre roto el día que hace falta.
+ *
+ * La lista NO se cachea. Todo el resto de Configuración se puede servir de
+ * memoria porque solo cambia cuando alguien lo edita desde acá; ésta cambia
+ * sola todos los días a las 18, y mostrar una foto vieja de la bitácora de
+ * respaldos es exactamente el engaño que la pantalla vino a evitar.
+ */
+function pintarRespaldos(cont, datos) {
+  var gen = C.gen;
+
+  if (!datos) {
+    cont.innerHTML = '<div class="cargando">Cargando…</div>';
+    llamar('config.respaldos.listar', {}).then(function (r) {
+      if (!vigente(gen)) return;
+      pintarRespaldos(cont, r);
+    }).catch(function (err) {
+      if (!vigente(gen)) return;
+      mostrarError(err, cont, function () { recargarConfig(); });
+    });
+    return;
+  }
+
+  var prog = datos.programado || {};
+  var carpeta = enlaceCarpetaRespaldos(datos);
+
+  var html = '<section class="bloque"><h2>Respaldos' +
+    '<span class="der">' +
+      (carpeta ? '<a class="btn chico" target="_blank" rel="noopener" href="' +
+                 txt(carpeta) + '">Ver la carpeta</a> ' : '') +
+      '<button class="btn chico" id="rsp-refrescar">Refrescar</button> ' +
+      '<button class="btn principal chico" id="rsp-ahora">Hacer respaldo ahora</button>' +
+    '</span></h2>' +
+
+    '<div class="caja"><p>Un respaldo es una <b>copia completa</b> de las dos ' +
+    'planillas del sistema —los datos y la auditoría— guardada en una carpeta ' +
+    'aparte del Drive. Sirve para volver atrás si algo se borra o se rompe.</p>' +
+    '<p class="ayuda">Las copias con más de ' +
+    txt(datos.dias_que_se_guardan || '—') + ' días se van solas a la papelera ' +
+    'para no llenar el Drive. Desde la papelera todavía se pueden recuperar.</p></div>';
+
+  // ---- el estado de la programación automática
+  html += bloqueProgramacion(prog, datos);
+
+  // ---- la respuesta que se viene a buscar
+  html += '<div class="caja" style="margin-top:14px"><h3>Última copia buena</h3>' +
+    (datos.ultimo_ok
+      ? '<p><b>' + txt(momentoLegible(datos.ultimo_ok.momento)) + '</b> · ' +
+        txt(tipoDeRespaldo(datos.ultimo_ok.tipo)) + '</p>'
+      : '<p>Todavía no hay ninguna copia registrada.</p>') +
+    '</div>';
+
+  // ---- la bitácora
+  if (!datos.hay_hoja) {
+    html += '<div class="caja aviso" style="margin-top:14px">' +
+      '<h3>Falta preparar la bitácora</h3>' +
+      '<p>Este sistema se instaló antes de que existiera el registro de ' +
+      'respaldos, así que la tabla todavía no está creada. No se perdió nada.</p>' +
+      '<p>Apretá <b>Hacer respaldo ahora</b>: crea la tabla y deja anotada la ' +
+      'primera copia.</p></div>';
+  } else if (!datos.registros.length) {
+    html += '<div class="vacio-msg">Todavía no se anotó ningún respaldo.</div>';
+  } else {
+    html += '<div class="tabla-cont" style="margin-top:14px"><table><thead><tr>' +
+      '<th>Cuándo</th><th>Tipo</th><th>Estado</th><th>Copias</th>' +
+      '<th>Tardó</th><th>Detalle</th></tr></thead><tbody>' +
+      datos.registros.map(function (r) {
+        var bien = r.estado === 'OK';
+        return '<tr' + (bien ? '' : ' class="inactiva"') + '>' +
+          '<td class="num">' + txt(momentoLegible(r.momento)) + '</td>' +
+          '<td>' + txt(tipoDeRespaldo(r.tipo)) +
+            (r.tipo === 'MANUAL' && r.usuario
+              ? '<div class="ayuda">' + txt(r.usuario) + '</div>' : '') +
+          '</td>' +
+          '<td><span class="pill ' + (bien ? 'si' : 'no') + '">' +
+            (bien ? 'Bien' : 'Falló') + '</span></td>' +
+          '<td class="dato">' + txt(r.archivos || '—') + '</td>' +
+          '<td class="num">' + txt(duracionLegible(r.duracion_ms)) + '</td>' +
+          '<td class="dato">' + txt(r.detalle || '') + '</td>' +
+        '</tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+
+  cont.innerHTML = html + '</section>';
+
+  $('rsp-refrescar').addEventListener('click', function () { recargarConfig(); });
+  $('rsp-ahora').addEventListener('click', function () { respaldarAhora(cont); });
+  if ($('rsp-programar')) {
+    $('rsp-programar').addEventListener('click', function () { programarRespaldo(cont); });
+  }
+}
+
+/**
+ * Qué dice la pantalla sobre el respaldo automático.
+ *
+ * Los tres estados son distintos y se escriben distinto a propósito:
+ * programado, NO programado (que es una falla silenciosa y hay que gritarla),
+ * y "no se pudo averiguar" —que pasa cuando el servidor no pudo leer los
+ * disparadores— donde mentir en cualquiera de las dos direcciones sería peor
+ * que decir que no se sabe.
+ */
+function bloqueProgramacion(prog, datos) {
+  if (prog.activo === true) {
+    return '<div class="caja" style="margin-top:14px"><h3>Copia automática</h3>' +
+      '<p><span class="pill si">Programada</span> Todos los días ' +
+      txt(prog.dias || 'de lunes a viernes') + ' a las ' + txt(prog.hora) + ':00. ' +
+      'Sábados y domingos no se respalda.</p>' +
+      '<p class="ayuda">Google no garantiza el minuto exacto: una tarea de las ' +
+      txt(prog.hora) + ' corre en algún momento entre las ' + txt(prog.hora) +
+      ' y las ' + txt(Number(prog.hora) + 1) + '. Es así en toda la plataforma y ' +
+      'no se puede ajustar.</p></div>';
+  }
+  if (prog.activo === false) {
+    return '<div class="caja aviso" style="margin-top:14px"><h3>Copia automática</h3>' +
+      '<p><span class="pill no">Apagada</span> Nadie está haciendo copias solo. ' +
+      'Si no se aprieta el botón, no hay respaldo.</p>' +
+      '<p><button class="btn principal chico" id="rsp-programar">' +
+      'Programar para las ' + txt(prog.hora) + ':00</button></p></div>';
+  }
+  return '<div class="caja aviso" style="margin-top:14px"><h3>Copia automática</h3>' +
+    '<p>No se pudo averiguar si está programada. Podés volver a programarla: ' +
+    'hacerlo de más no rompe nada, reemplaza la programación anterior.</p>' +
+    '<p><button class="btn principal chico" id="rsp-programar">' +
+    'Programar para las ' + txt(prog.hora) + ':00</button></p></div>';
+}
+
+/**
+ * El respaldo a mano.
+ *
+ * No usa guardarSinEsperar —el patrón del resto de Configuración— porque acá
+ * no hay nada que adelantar en pantalla y porque copiar dos planillas enteras
+ * tarda bastante más que guardar una fila. Si el botón quedara vivo, alguien
+ * lo apretaría tres veces creyendo que no pasó nada.
+ */
+function respaldarAhora(cont) {
+  var b = $('rsp-ahora');
+  b.disabled = true;
+  b.textContent = 'Copiando…';
+  marcarEnVuelo(1);
+
+  llamar('config.respaldo.ahora', { idem: nuevaIdem() })
+    .then(function (r) {
+      marcarEnVuelo(-1);
+      avisar(r.mensaje || 'Respaldo hecho');
+      pintarRespaldos(cont, r);
+    })
+    .catch(function (err) {
+      marcarEnVuelo(-1);
+      b.disabled = false;
+      b.textContent = 'Hacer respaldo ahora';
+      // Un respaldo que no salió tiene que doler: se avisa fuerte Y se deja
+      // el detalle arriba, porque el motivo (Drive sin espacio, permisos)
+      // casi nunca se adivina.
+      avisar('NO se hizo el respaldo: ' + (err.mensaje || 'error desconocido'), 'error');
+      if ($('cfg-avisos')) mostrarError(err, $('cfg-avisos'));
+    });
+}
+
+function programarRespaldo(cont) {
+  var b = $('rsp-programar');
+  b.disabled = true;
+  b.textContent = 'Programando…';
+  marcarEnVuelo(1);
+
+  llamar('config.respaldo.programar', { idem: nuevaIdem() })
+    .then(function (r) {
+      marcarEnVuelo(-1);
+      avisar(r.mensaje || 'Respaldo programado');
+      pintarRespaldos(cont, r);
+    })
+    .catch(function (err) {
+      marcarEnVuelo(-1);
+      b.disabled = false;
+      avisar('NO se pudo programar: ' + (err.mensaje || 'error desconocido'), 'error');
+      if ($('cfg-avisos')) mostrarError(err, $('cfg-avisos'));
+    });
+}
+
+/** La carpeta del Drive donde viven las copias, tomada del último registro
+ *  que la traiga. La guarda el servidor en cada fila justamente para que la
+ *  pantalla no tenga que saber nada de Drive. */
+function enlaceCarpetaRespaldos(datos) {
+  var con = (datos.registros || []).filter(function (r) { return r.carpeta_url; })[0];
+  return con ? con.carpeta_url : '';
+}
+
+/** 2026-09-09T18:04:11-03:00 → 09/09/2026 18:04 */
+function momentoLegible(iso) {
+  var m = String(iso || '');
+  if (m.length < 16) return m || '—';
+  return fechaCorta(m.substring(0, 10)) + ' ' + m.substring(11, 16);
+}
+
+function tipoDeRespaldo(t) {
+  return String(t) === 'MANUAL' ? 'A mano' : 'Automático';
+}
+
+function duracionLegible(ms) {
+  var n = Number(ms || 0);
+  if (!n) return '—';
+  return n < 1000 ? n + ' ms' : (Math.round(n / 100) / 10) + ' s';
 }
 
 // ================================================================ velocidad
