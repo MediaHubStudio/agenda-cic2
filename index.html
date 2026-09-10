@@ -818,6 +818,25 @@
                    white-space:nowrap;}
   .rosca .refs .v{color:var(--muted);font-variant-numeric:tabular-nums;}
 
+  /* ---------------- el mapa ---------------- */
+  .mapa-caja{border:1px solid var(--rule);border-radius:6px;overflow:hidden;
+             background:var(--surface);}
+  .mapa{height:460px;width:100%;background:var(--surface-2);}
+  @media (max-width:620px){ .mapa{height:320px;} }
+  /* El fondo del mapa son fotos de calles, siempre claras. En modo oscuro los
+     controles y el credito de OpenStreetMap se dibujan sobre ese fondo claro,
+     asi que se los deja en tinta oscura a mano: heredar el color del tema los
+     volveria blancos sobre blanco. */
+  .mapa .leaflet-control a,.mapa .leaflet-control-attribution{color:#222;}
+  .mapa .leaflet-popup-content{color:#222;font-family:var(--sans);font-size:13px;}
+  .leyenda-mapa{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;
+                padding:8px 12px;border-top:1px solid var(--rule);font-size:12px;}
+  .leyenda-mapa .rot{font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+                     color:var(--muted);font-weight:600;margin-right:4px;}
+  .leyenda-mapa .paso{display:inline-flex;align-items:center;gap:5px;
+                      color:var(--muted);font-variant-numeric:tabular-nums;}
+  .leyenda-mapa .paso i{width:14px;height:10px;border-radius:2px;display:block;}
+
   /* ---------------- impresion ----------------
      En el papel no van la barra, el menu ni los botones: va el contenido.
      Las tablas no se pueden cortar en dos hojas por la mitad de una fila. */
@@ -900,6 +919,11 @@
     .barras .pista{border:1px solid #ccc;height:8pt;}
     /* En papel no hay scroll lateral: las columnas entran todas o se achican. */
     .columnas{overflow:visible;height:110pt;}
+    /* El mapa se imprime con lo que haya alcanzado a dibujarse; la tabla de
+       zonas que va abajo es la que lleva los numeros al papel. */
+    .mapa{height:300pt;break-inside:avoid;page-break-inside:avoid;}
+    .mapa-caja,.leyenda-mapa{break-inside:avoid;page-break-inside:avoid;}
+    .leyenda-mapa .paso i{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     .columnas .v,.columnas .et{color:#000;}
     .rosca svg{flex-basis:100pt;width:100pt;height:100pt;}
     .rosca .refs,.rosca .refs .v{color:#000;font-size:9.5pt;}
@@ -1136,7 +1160,7 @@
 // transporte_web.html.
 var CLIENT_ID    = "873472275504-qia4rjcejadpagkgam7urn0bahq0n7ur.apps.googleusercontent.com";
 var URL_NUCLEO   = "https://script.google.com/macros/s/AKfycby-OWNY3iXvC4ssuWxHb_jogLtNbUtNlPX8bGY3IMu571aKJPFxKWoHUpE-0x4xy_kb/exec";
-var BUILD_PORTAL = "2026-09-09 22:24";
+var BUILD_PORTAL = "2026-09-10 07:52";
 var URL_PORTAL   = "";   // no aplica: esta pantalla no vive en Apps Script
 </script>
 
@@ -6633,6 +6657,9 @@ var R = { seccion: null, desde: null, hasta: null, gen: 0 };
 
 var SECCIONES_REPORTE = [
   { id:'estadisticas', etiqueta:'Estadísticas',  permiso:'reporte.ver',  pintar:pintarEstadisticas },
+  // El mapa pide ver el padrón completo, no reporte.ver: son domicilios de
+  // pacientes, no cuentas de turnos.
+  { id:'mapa',      etiqueta:'Mapa',            permiso:'paciente.ver', pintar:pintarMapa },
   { id:'ocupacion', etiqueta:'Ocupación',        permiso:'reporte.ver',  pintar:pintarOcupacion },
   { id:'ausentismo',etiqueta:'Ausentismo',       permiso:'reporte.ver',  pintar:pintarAusentismo },
   { id:'fuera',     etiqueta:'Fuera de horario', permiso:'reporte.ver',  pintar:pintarFueraPlantilla },
@@ -7048,6 +7075,334 @@ function filasExportables(r) {
   bloque('Hora', a.hora);
   bloque('Mes', a.mes);
   return filas;
+}
+
+// =====================================================================
+//  EL MAPA
+//
+//  ================================================================
+//   QUÉ SE VE ACÁ, Y QUÉ NO
+//
+//   Cuadrículas pintadas según cuánto se consulta desde cada zona. NO es un
+//   mapa de dónde vive cada paciente: una zona con menos de tres personas
+//   ni siquiera llega desde el servidor, porque una zona con una persona es
+//   una casa.
+//
+//   Los puntos sueltos se pueden pedir —hacen falta para revisar una carga
+//   rara— pero se piden aparte, exigen ver el padrón completo, y queda
+//   auditado quién los miró.
+//  ================================================================
+//
+//  ================================================================
+//   LA ÚNICA LIBRERÍA DE AFUERA DE TODO EL SISTEMA, Y POR QUÉ
+//
+//   Los gráficos están dibujados con cajas de HTML justamente para no
+//   depender de que un servidor de internet conteste. Un mapa es otra cosa:
+//   el fondo son imágenes de calles que hay que traer sí o sí de algún lado,
+//   y escribir un visor de mapas a mano no es razonable.
+//
+//   Se carga SOLO cuando se abre el mapa: quien nunca lo abre no paga nada.
+//   Y si no llega —conexión caída, servidor de la librería sin responder— la
+//   pantalla NO queda en blanco: muestra la misma información como tabla
+//   ordenada de zonas. Esa es la condición para permitirse la dependencia.
+//
+//   El mapa de Google interactivo quedó afuera a propósito: su documentación
+//   exige habilitar facturación en el proyecto, o sea una tarjeta cargada, y
+//   este sistema tiene que andar en una cuenta gratuita. Quien ubica las
+//   direcciones SÍ es Google, por el servicio que Apps Script trae sin clave
+//   ni tarjeta.
+//  ================================================================
+
+var LEAFLET_JS  = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
+var LEAFLET_CSS = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css';
+
+var M = { base: 'CONSULTAS', puntos: false, datos: null, estado: null,
+          mapa: null, capas: [], gen: 0 };
+
+function pintarMapa(cont) {
+  var gen = ++M.gen;
+  cont.innerHTML = '<div class="cargando">Armando el mapa…</div>';
+
+  // Las dos cosas en paralelo: el estado de las direcciones (para saber si
+  // falta ubicar) y los datos del mapa.
+  Promise.all([
+    llamar('reporte.mapa.estado', {}),
+    llamar('reporte.mapa', { desde: R.desde, hasta: R.hasta,
+                             base: M.base, con_puntos: M.puntos })
+  ]).then(function (rs) {
+    if (gen !== M.gen || !repVigente(R.gen)) return;
+    M.estado = rs[0];
+    M.datos = rs[1];
+    dibujarMapa(cont);
+  }).catch(function (err) {
+    if (gen !== M.gen) return;
+    mostrarError(err, cont, function () { pintarMapa(cont); });
+  });
+}
+
+function dibujarMapa(cont) {
+  var d = M.datos, e = M.estado;
+
+  var html = '<section class="bloque"><h2>Mapa de consultas' +
+    '<span class="der">' +
+      '<button class="btn chico" id="mp-base" aria-pressed="' +
+        (M.base === 'PACIENTES') + '">' +
+        (M.base === 'CONSULTAS' ? 'Viendo consultas' : 'Viendo pacientes') + '</button> ' +
+      (puede('paciente.ver')
+        ? '<button class="btn chico" id="mp-puntos" aria-pressed="' + M.puntos + '">' +
+          (M.puntos ? 'Ocultar direcciones' : 'Ver direcciones') + '</button>' : '') +
+    '</span></h2>' +
+
+    '<div class="caja"><p>Cada cuadrícula mide <b>' + d.lado_m + ' m</b> de lado y se ' +
+    'pinta según ' + (d.base === 'CONSULTAS'
+      ? 'cuántas consultas salieron de ahí en el período elegido'
+      : 'cuánta gente del padrón vive ahí') + '.</p>' +
+    '<p class="ayuda">Una cuadrícula con menos de ' + d.minimo + ' no se pinta: con una ' +
+    'sola persona, la zona señalaría una casa. ' +
+    (d.zonas_ocultas
+      ? 'Hay <b>' + d.zonas_ocultas + '</b> zonas así, con ' + d.en_zonas_ocultas +
+        ' en total.'
+      : '') + '</p></div>';
+
+  // Lo que falta ubicar, dicho antes del mapa: un mapa armado sobre la mitad
+  // del padrón no se puede leer como si fuera el padrón entero.
+  html += bloqueUbicacion(e, d);
+
+  if (!d.celdas.length) {
+    html += '<div class="vacio-msg">Todavía no hay ninguna zona para dibujar.</div>' +
+            '</section>';
+    cont.innerHTML = html;
+    conectarBotonesMapa(cont);
+    return;
+  }
+
+  html += '<div class="mapa-caja"><div id="mp-lienzo" class="mapa"></div>' +
+          leyendaMapa(d) + '</div>';
+
+  // La misma información como tabla. No es un respaldo por si falla el mapa:
+  // es el dato exacto, que en un mapa se estima a ojo y acá se lee.
+  html += '<h3 style="margin:16px 0 6px;font-size:14px">Zonas, de mayor a menor</h3>' +
+    '<div class="tabla-cont tabla-scroll tabla-6"><table><thead><tr>' +
+    '<th>Zona</th><th>' + (d.base === 'CONSULTAS' ? 'Consultas' : 'Personas') + '</th>' +
+    '<th>Direcciones</th><th></th></tr></thead><tbody>' +
+    d.celdas.slice(0, 40).map(function (c, i) {
+      return '<tr><td>Zona ' + (i + 1) + '</td>' +
+        '<td class="num"><b>' + c.n + '</b></td>' +
+        '<td class="num">' + c.direcciones + '</td>' +
+        '<td class="acciones"><a class="btn chico" target="_blank" rel="noopener" ' +
+          'href="https://www.google.com/maps/search/?api=1&query=' +
+          c.lat.toFixed(6) + ',' + c.lng.toFixed(6) + '">Ver en Google Maps</a></td></tr>';
+    }).join('') + '</tbody></table></div>';
+
+  cont.innerHTML = html + '</section>';
+  conectarBotonesMapa(cont);
+  conMapaListo(function (ok) {
+    if (!ok) {
+      $('mp-lienzo').innerHTML =
+        '<div class="caja aviso"><h3>No se pudo cargar el mapa</h3>' +
+        '<p>El dibujo del mapa se trae de internet y esta vez no llegó. ' +
+        'Los números son los mismos: están en la tabla de acá abajo.</p></div>';
+      return;
+    }
+    montarLienzo(d);
+  });
+}
+
+/** El aviso de cuántas direcciones faltan ubicar, y el botón para hacerlo. */
+function bloqueUbicacion(e, d) {
+  if (!e) return '';
+  var falta = e.pendientes > 0;
+  if (!falta && !d.sin_ubicar) return '';
+
+  return '<div class="caja aviso"><h3>' +
+    (falta ? 'Faltan ubicar direcciones' : 'Hay direcciones que no se pudieron ubicar') +
+    '</h3>' +
+    '<p>El mapa está armado sobre <b>' + d.ubicados + '</b> de ' + d.total +
+    '. Quedan <b>' + d.sin_ubicar + '</b> afuera' +
+    (e.no_encontradas ? ', y <b>' + e.no_encontradas + '</b> direcciones no las ' +
+      'encontró Google —suelen estar mal escritas o incompletas' : '') + '.</p>' +
+    (falta
+      ? '<p class="ayuda">Ubicar una dirección se hace <b>una sola vez</b> y queda ' +
+        'guardada. Google permite ' + e.cupo_diario + ' por día sin costo, así que si ' +
+        'son muchas hay que hacerlo en varios días. Quedan <b>' + e.pendientes +
+        '</b>, de a ' + e.por_tanda + ' por vez.</p>' +
+        (puede('config.sistema')
+          ? '<p><button class="btn principal chico" id="mp-ubicar">Ubicar ' +
+            Math.min(e.pendientes, e.por_tanda) + ' direcciones</button></p>'
+          : '<p>Pedile a un administrador que las ubique.</p>')
+      : '') +
+    '</div>';
+}
+
+/**
+ * La escala de color.
+ *
+ * Cinco pasos y no un degradado continuo: en un degradado nadie distingue el
+ * 40 % del 55 %, y lo que se necesita saber es en qué escalón está la zona.
+ * Cada escalón dice su rango en números, porque el color acompaña y el número
+ * informa —la misma regla que los gráficos.
+ */
+function leyendaMapa(d) {
+  var pasos = escalaMapa(d.maximo);
+  return '<div class="leyenda-mapa">' +
+    '<span class="rot">' + (d.base === 'CONSULTAS' ? 'Consultas' : 'Personas') +
+    ' por zona</span>' +
+    pasos.map(function (p, i) {
+      return '<span class="paso"><i style="background:' + colorZona(i) + '"></i>' +
+             txt(p.rotulo) + '</span>';
+    }).join('') + '</div>';
+}
+
+/** Los cinco escalones, calculados sobre el máximo que haya. */
+function escalaMapa(maximo) {
+  var m = Math.max(1, maximo);
+  var pasos = [];
+  for (var i = 0; i < 5; i++) {
+    var desde = Math.floor((m * i) / 5) + 1;
+    var hasta = Math.floor((m * (i + 1)) / 5);
+    if (hasta < desde) hasta = desde;
+    pasos.push({ desde: desde, hasta: hasta,
+                 rotulo: desde === hasta ? String(desde) : desde + '–' + hasta });
+  }
+  return pasos;
+}
+
+function escalonDe(n, maximo) {
+  var m = Math.max(1, maximo);
+  return Math.min(4, Math.floor(((n - 1) / m) * 5));
+}
+
+/** Del celeste al rojo, la misma idea que la barra de ocupación: lo que más
+ *  se usa salta a la vista. */
+function colorZona(i) {
+  return ['#9BD3E6', '#5FB3D0', '#3E8FA8', '#C98A2E', '#B0392F'][i] || '#9BD3E6';
+}
+
+function conectarBotonesMapa(cont) {
+  if ($('mp-base')) {
+    $('mp-base').addEventListener('click', function () {
+      M.base = (M.base === 'CONSULTAS') ? 'PACIENTES' : 'CONSULTAS';
+      pintarMapa(cont);
+    });
+  }
+  if ($('mp-puntos')) {
+    $('mp-puntos').addEventListener('click', function () {
+      M.puntos = !M.puntos;
+      if (M.puntos) {
+        avisar('Las direcciones sueltas son datos de pacientes: queda registrado ' +
+               'que las miraste.', 'error');
+      }
+      pintarMapa(cont);
+    });
+  }
+  if ($('mp-ubicar')) {
+    $('mp-ubicar').addEventListener('click', function () {
+      var b = $('mp-ubicar');
+      b.disabled = true;
+      b.textContent = 'Ubicando… (puede tardar un minuto)';
+      marcarEnVuelo(1);
+      llamar('reporte.mapa.ubicar', { idem: nuevaIdem() })
+        .then(function (r) {
+          marcarEnVuelo(-1);
+          avisar(r.mensaje);
+          pintarMapa(cont);
+        })
+        .catch(function (err) {
+          marcarEnVuelo(-1);
+          b.disabled = false;
+          avisar('NO se pudieron ubicar: ' + (err.mensaje || 'error'), 'error');
+          if ($('rep-avisos')) mostrarError(err, $('rep-avisos'));
+        });
+    });
+  }
+}
+
+// ---------------------------------------------------------------- la librería
+
+var LEAFLET_ESTADO = null;      // null = sin pedir, 'yendo' | true | false
+
+/**
+ * Trae la librería del mapa una sola vez y avisa si llegó.
+ *
+ * Con un tope de espera: sin él, una conexión que no corta pero tampoco
+ * contesta deja la pantalla en "Armando el mapa…" para siempre, que es la
+ * peor forma de fallar.
+ */
+function conMapaListo(alTerminar) {
+  if (LEAFLET_ESTADO === true)  { alTerminar(true); return; }
+  if (LEAFLET_ESTADO === false) { alTerminar(false); return; }
+
+  var esperando = LEAFLET_ESPERANDO = (LEAFLET_ESPERANDO || []);
+  esperando.push(alTerminar);
+  if (LEAFLET_ESTADO === 'yendo') return;
+  LEAFLET_ESTADO = 'yendo';
+
+  function terminar(ok) {
+    if (LEAFLET_ESTADO !== 'yendo') return;
+    LEAFLET_ESTADO = ok;
+    var lista = LEAFLET_ESPERANDO || [];
+    LEAFLET_ESPERANDO = [];
+    lista.forEach(function (fn) { fn(ok); });
+  }
+
+  var css = document.createElement('link');
+  css.rel = 'stylesheet';
+  css.href = LEAFLET_CSS;
+  document.head.appendChild(css);
+
+  var js = document.createElement('script');
+  js.src = LEAFLET_JS;
+  js.onload = function () { terminar(typeof L !== 'undefined'); };
+  js.onerror = function () { terminar(false); };
+  document.head.appendChild(js);
+
+  setTimeout(function () { terminar(typeof L !== 'undefined'); }, 8000);
+}
+var LEAFLET_ESPERANDO = [];
+
+// ---------------------------------------------------------------- el lienzo
+
+function montarLienzo(d) {
+  var lienzo = $('mp-lienzo');
+  if (!lienzo) return;
+
+  // Si se repinta, el mapa anterior queda vivo y se superpone.
+  if (M.mapa) { try { M.mapa.remove(); } catch (e) {} M.mapa = null; }
+
+  M.mapa = L.map(lienzo, { scrollWheelZoom: false });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '© colaboradores de OpenStreetMap'
+  }).addTo(M.mapa);
+
+  var dLat = d.lado_m / 111320;
+  var limites = [];
+
+  d.celdas.forEach(function (c) {
+    var dLng = d.lado_m / (111320 * Math.cos(c.lat * Math.PI / 180));
+    var esquinas = [[c.lat - dLat / 2, c.lng - dLng / 2],
+                    [c.lat + dLat / 2, c.lng + dLng / 2]];
+    limites.push(esquinas[0], esquinas[1]);
+    L.rectangle(esquinas, {
+      color: colorZona(escalonDe(c.n, d.maximo)),
+      weight: 1, fillOpacity: 0.55
+    }).addTo(M.mapa)
+      .bindPopup('<b>' + c.n + '</b> ' +
+                 (d.base === 'CONSULTAS' ? 'consultas' : 'personas') +
+                 '<br>' + c.direcciones + ' direcciones distintas');
+  });
+
+  if (d.puntos) {
+    d.puntos.forEach(function (p) {
+      limites.push([p.lat, p.lng]);
+      L.circleMarker([p.lat, p.lng], {
+        radius: 4, color: '#B0392F', weight: 1, fillOpacity: 0.8
+      }).addTo(M.mapa).bindPopup(p.n + (p.n === 1 ? ' persona' : ' personas'));
+    });
+  }
+
+  if (limites.length) M.mapa.fitBounds(limites, { padding: [20, 20] });
+  else M.mapa.setView([d.centro.lat, d.centro.lng], 14);
 }
 
 // ==================================== el registro, en castellano
