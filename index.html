@@ -560,6 +560,13 @@
      ================================================================ */
   .persona{padding:14px 18px;margin:-18px -18px 14px;
            background:var(--acento-suave);border-bottom:1px solid var(--rule);}
+  /* El nombre a la izquierda y Editar a la derecha, en la misma linea. En un
+     telefono el boton se cae abajo en vez de apretar el nombre. */
+  .persona .identidad-cab{display:flex;align-items:flex-start;gap:10px;
+                          flex-wrap:wrap;}
+  .persona .identidad-cab h4{flex:1 1 auto;min-width:0;}
+  .persona .identidad-cab .btn{flex:none;background:var(--surface);}
+  .persona .identidad-cab .ayuda{flex:none;margin:0;}
   .persona h4{margin:0;font-size:20px;font-weight:700;letter-spacing:-.015em;
               color:var(--acento-ink);overflow-wrap:anywhere;}
   .persona.de-baja h4{color:var(--muted);text-decoration:line-through;}
@@ -572,6 +579,10 @@
   .persona .identidad .obra{background:var(--surface);border:1px solid var(--rule-fuerte);
                             border-radius:10px;padding:1px 9px;font-size:12px;
                             font-weight:600;color:var(--ink);}
+  /* El numero de afiliado, dentro de la misma pastilla que la obra social:
+     se piden juntos y se leen juntos. */
+  .persona .identidad .obra .carnet{font-family:var(--mono);font-weight:500;
+                                    color:var(--muted);font-size:11.5px;}
 
   .acciones-contacto{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
   .accion{display:inline-flex;align-items:center;gap:9px;text-decoration:none;
@@ -816,6 +827,10 @@
     body{background:#fff;color:#000;font-size:11pt;}
     main{max-width:none;padding:0;}
     section.bloque{border:0;padding:0;margin:0 0 12pt;break-inside:avoid;}
+    /* Una seccion con diez graficos no entra en una hoja. Pedir que no se
+       parta hace que el navegador ignore el pedido y reparta a su gusto;
+       mejor dejarla partir y cuidar cada grafico por separado (ver abajo). */
+    section.bloque:has(.graficos){break-inside:auto;}
     .caja{border:1px solid #999;padding:8pt;}
     table{width:100%;border-collapse:collapse;}
     th,td{border:1px solid #bbb;padding:3pt 5pt;font-size:9.5pt;}
@@ -849,6 +864,53 @@
     a[href]::after{content:"";}                  /* sin URLs pegadas al texto */
     .pie-impresion{display:block !important;margin-top:10pt;padding-top:6pt;
                    border-top:1px solid #999;font-size:8.5pt;color:#444;}
+
+    /* ---------------- graficos en papel ----------------
+
+       DOS PROBLEMAS DISTINTOS, y los dos hacen que la hoja no sirva:
+
+       1. UN GRAFICO CORTADO POR LA MITAD no es medio grafico: es basura. La
+          mitad de las barras en una hoja y la otra mitad en la siguiente no
+          se pueden comparar, que es lo unico que un grafico de barras sirve
+          para hacer. Por eso cada uno se declara indivisible, y tambien cada
+          barra, cada columna y cada renglon de referencias adentro.
+
+       2. LOS NAVEGADORES NO IMPRIMEN LOS FONDOS por omision, para ahorrar
+          tinta. Como las barras SON un fondo de color, salian todas en
+          blanco: quedaba una lista de numeros con rectangulos vacios. Con
+          print-color-adjust:exact se imprimen igual que en pantalla.
+          Igual el numero sigue escrito al lado de cada barra, asi que si
+          alguien imprime en blanco y negro no se pierde el dato: esa es la
+          regla de todo el sistema y en papel se nota mas que en ningun lado.
+
+       La seccion de estadisticas NO puede llevar break-inside:avoid como el
+       resto de las secciones: no entra en una hoja, asi que pedirlo hace que
+       el navegador lo ignore y reparta como quiera. Se le saca a la seccion y
+       se le pone a cada pedazo, que si entran. */
+    #vista .graficos{display:block;}
+    .grafico,.tarjeta,.tarjetas,.rosca,.barras .pista,.columnas .col,
+    .rosca .refs div{break-inside:avoid;page-break-inside:avoid;}
+    .grafico{border:1px solid #999;padding:8pt;margin:0 0 10pt;
+             break-inside:avoid;page-break-inside:avoid;}
+    .grafico h3{font-size:11pt;color:#000;}
+    /* La etiqueta y su barra son dos celdas de la misma grilla y se pueden
+       separar. Se las mantiene juntas declarando indivisible el par. */
+    .barras{break-inside:auto;}
+    .barras .et,.barras .v{color:#000;font-size:9.5pt;}
+    .barras .pista{border:1px solid #ccc;height:8pt;}
+    /* En papel no hay scroll lateral: las columnas entran todas o se achican. */
+    .columnas{overflow:visible;height:110pt;}
+    .columnas .v,.columnas .et{color:#000;}
+    .rosca svg{flex-basis:100pt;width:100pt;height:100pt;}
+    .rosca .refs,.rosca .refs .v{color:#000;font-size:9.5pt;}
+    .tarjeta{border:1px solid #999;}
+    .tarjeta .n{color:#000;}
+    .tarjeta .r,.tarjeta .ay{color:#333;}
+    /* Que los colores de las barras y de la rosca lleguen al papel. */
+    .barras .pista i,.columnas .caño,.rosca .refs .pt,.rosca svg circle,
+    .tarjeta,.grafico{
+      -webkit-print-color-adjust:exact;print-color-adjust:exact;
+    }
   }
   .pie-impresion{display:none;}
 
@@ -1074,7 +1136,7 @@
 // transporte_web.html.
 var CLIENT_ID    = "873472275504-qia4rjcejadpagkgam7urn0bahq0n7ur.apps.googleusercontent.com";
 var URL_NUCLEO   = "https://script.google.com/macros/s/AKfycby-OWNY3iXvC4ssuWxHb_jogLtNbUtNlPX8bGY3IMu571aKJPFxKWoHUpE-0x4xy_kb/exec";
-var BUILD_PORTAL = "2026-09-09 20:57";
+var BUILD_PORTAL = "2026-09-09 21:27";
 var URL_PORTAL   = "";   // no aplica: esta pantalla no vive en Apps Script
 </script>
 
@@ -4328,8 +4390,26 @@ function pintarFicha(p, provisoria) {
   // La franja con quién es. El nombre va acá y no solo en el título de la
   // ventana porque es el dato que se confronta contra la persona que está
   // enfrente, y tiene que estar pegado al documento y a la edad.
+  // ================================================================
+  //  EDITAR VA ACA ARRIBA, PEGADO A QUIEN ES
+  //
+  //  Estaba, pero como boton principal del PIE de la ventana, donde se lee
+  //  como "Aceptar": el lugar donde uno busca el boton de cerrar, no el de
+  //  corregir un telefono. Nadie lo encontraba.
+  //
+  //  Aparece solo con la ficha COMPLETA. El renglon provisorio —lo que la
+  //  lista ya sabia— no trae la `version` de la fila, y guardar sin version
+  //  pisa el cambio de otra persona sin enterarse.
+  // ================================================================
+  var puedeEditar = !provisoria && puede('paciente.editar');
   html += '<div class="persona' + (p.activo ? '' : ' de-baja') + '">' +
-    '<h4>' + txt(nombrePaciente(p)) + '</h4>' +
+    '<div class="identidad-cab">' +
+      '<h4>' + txt(nombrePaciente(p)) + '</h4>' +
+      (puedeEditar
+        ? '<button class="btn chico" id="f-editar">Editar datos</button>'
+        : (provisoria && puede('paciente.editar')
+            ? '<span class="ayuda">buscando la ficha…</span>' : '')) +
+    '</div>' +
     '<p class="identidad">' + lineaIdentidad(p) + '</p>' +
     '</div>';
 
@@ -4395,12 +4475,20 @@ function pintarFicha(p, provisoria) {
     titulo: 'Ficha del paciente',
     ancho: 680,
     cuerpo: html,
-    // Editar necesita la ficha completa: sin la versión, guardar chocaría
-    // contra el control de concurrencia. Aparece cuando termina de llegar.
-    textoAceptar: (!provisoria && puede('paciente.editar')) ? 'Editar' : null,
-    alAceptar: (!provisoria && puede('paciente.editar'))
-      ? function () { formPacienteEditar(p); return false; } : null
+    // El pie solo cierra. Editar es una acción sobre el paciente y vive
+    // arriba, junto al nombre.
+    textoAceptar: null
   });
+
+  if ($('f-editar')) {
+    $('f-editar').addEventListener('click', function () {
+      // Cerrar antes de abrir: solo puede haber una ventana a la vez, y
+      // abrirModal ya cierra la anterior, pero dejarlo explícito evita que
+      // el día que eso cambie esta ficha quede abajo del formulario.
+      cerrarModal();
+      formPacienteEditar(p);
+    });
+  }
 }
 
 /**
@@ -4423,7 +4511,13 @@ function lineaIdentidad(p) {
     partes.push('<span>' + txt(fechaCorta(p.fecha_nacimiento)) + '</span>');
   }
   if (p.sexo) partes.push('<span>' + txt(p.sexo) + '</span>');
-  if (p.obra_social) partes.push('<span class="obra">' + txt(p.obra_social) + '</span>');
+  if (p.obra_social) {
+    // El carnet va PEGADO a la obra social, no como dato suelto: cuando en el
+    // mostrador se pide el carnet, se pide junto con el nombre de la obra.
+    partes.push('<span class="obra">' + txt(p.obra_social) +
+      (p.nro_carnet ? ' <span class="carnet">' + txt(p.nro_carnet) + '</span>' : '') +
+      '</span>');
+  }
   return partes.join('<span class="sep">·</span>');
 }
 
@@ -6559,6 +6653,9 @@ function montarReportes(cont) {
   R.hasta = R.hasta || S.sesion.hoy || hoyLocal();
   R.desde = R.desde || sumarDias(R.hasta, -30);
   R.gen++;
+  // Se cambió de solapa o de fechas: lo que había para exportar ya no es lo
+  // que se está mirando. Ver la nota de ULTIMO_REPORTE.
+  ULTIMO_REPORTE = null;
 
   cont.innerHTML =
     '<div class="barra">' +
@@ -6595,11 +6692,32 @@ function montarReportes(cont) {
   disponibles.filter(function (s) { return s.id === R.seccion; })[0].pintar($('rep-cuerpo'));
 }
 
-// Lo último que se dibujó, para poder exportarlo sin volver a pedirlo.
+// ================================================================
+//  LO ULTIMO QUE SE DIBUJO, PARA EXPORTARLO SIN VOLVER A PEDIRLO
+//
+//  Se BORRA al cambiar de solapa, y eso no es prolijidad: antes quedaba el
+//  de la solapa anterior. Quien miraba Estadísticas y apretaba Exportar
+//  mientras todavía calculaba se llevaba, sin ningún aviso, la planilla de
+//  Ocupación con el título de Ocupación. Un archivo equivocado que parece
+//  bien es peor que un botón que no anda.
+//
+//  Guarda de qué solapa es, para poder comprobarlo antes de mandar.
+// ================================================================
 var ULTIMO_REPORTE = null;
 
 function exportarReporte() {
-  if (!ULTIMO_REPORTE) { avisar('Esperá a que termine de calcular.', 'error'); return; }
+  if (!ULTIMO_REPORTE) {
+    avisar('Todavía no terminó de calcular. Esperá a que aparezcan los datos ' +
+           'y volvé a apretar Exportar.', 'error');
+    return;
+  }
+  if (ULTIMO_REPORTE.seccion && ULTIMO_REPORTE.seccion !== R.seccion) {
+    // No debería pasar nunca —se borra al cambiar de solapa— pero si pasara,
+    // antes que exportar lo que no es, no se exporta.
+    avisar('Lo que hay para exportar es de otra solapa. Esperá a que termine ' +
+           'de calcular esta.', 'error');
+    return;
+  }
   exportarAHojaDeCalculo(ULTIMO_REPORTE);
 }
 
@@ -6743,6 +6861,7 @@ function dibujarEstadisticas(cont, r) {
   // Se exporta lo que se está mirando, en una sola planilla: cada gráfico es
   // un bloque de filas etiqueta/valor. Es lo que se pega en un informe.
   ULTIMO_REPORTE = {
+    seccion: 'estadisticas',
     accion: 'exportar.reporte', origen: 'reporte.estadisticas',
     titulo: 'Estadísticas',
     subtitulo: fechaCorta(r.desde) + ' al ' + fechaCorta(r.hasta),
@@ -7070,6 +7189,7 @@ function pintarOcupacion(cont) {
       }).join('') + '</tbody></table></div>';
 
     ULTIMO_REPORTE = {
+      seccion: 'ocupacion',
       accion: 'exportar.reporte', origen: 'reporte.ocupacion',
       titulo: 'Ocupación',
       subtitulo: fechaCorta(r.desde) + ' al ' + fechaCorta(r.hasta),
@@ -7120,6 +7240,7 @@ function pintarAusentismo(cont) {
     }
 
     ULTIMO_REPORTE = {
+      seccion: 'ausentismo',
       accion: 'exportar.reporte', origen: 'reporte.ausentismo',
       titulo: 'Pacientes con ausencias repetidas',
       subtitulo: fechaCorta(r.desde) + ' al ' + fechaCorta(r.hasta),
@@ -7165,6 +7286,7 @@ function pintarFueraPlantilla(cont) {
     }
 
     ULTIMO_REPORTE = {
+      seccion: 'fuera',
       accion: 'exportar.reporte', origen: 'reporte.fuera_plantilla',
       titulo: 'Turnos fuera del horario configurado',
       subtitulo: 'Desde ' + fechaCorta(r.desde),
@@ -7261,6 +7383,7 @@ function pintarAuditoria(cont) {
       // La auditoría se exporta con SU propia acción: el permiso que protege
       // la pantalla es el mismo que protege el archivo.
       ULTIMO_REPORTE = {
+        seccion: 'auditoria',
         accion: 'exportar.auditoria', origen: 'auditoria',
         titulo: 'Registro de auditoría',
         subtitulo: fechaCorta(r.desde) + ' al ' + fechaCorta(r.hasta),
@@ -7368,7 +7491,20 @@ function exportarAHojaDeCalculo(cfg) {
     });
   }).catch(function (err) {
     marcarEnVuelo(-1);
-    mostrarError(err, null);
+    // ================================================================
+    //  UNA EXPORTACION QUE FALLA TIENE QUE DEJAR RASTRO EN LA PANTALLA
+    //
+    //  Antes solo salía un globito que se va solo a los ocho segundos. Quien
+    //  aprieta Exportar y se da vuelta a atender a alguien vuelve, no ve
+    //  nada, y concluye que el botón no anda — sin forma de saber qué pasó
+    //  ni qué contar para que se lo arreglen.
+    //
+    //  Ahora además queda escrito, con el código de error, en la franja de
+    //  avisos de la pantalla que lo pidió.
+    // ================================================================
+    avisar('NO se pudo exportar: ' + (err.mensaje || 'error desconocido'), 'error');
+    var franja = $('rep-avisos') || $('ag-avisos') || $('cfg-avisos') || $('pac-avisos');
+    if (franja) mostrarError(err, franja);
   });
 }
 
